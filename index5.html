@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="yp.jpg">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,8 +25,6 @@
             background-color: var(--yape-purple); 
             display: flex; 
             justify-content: center; 
-            /* AJUSTE: dVh para evitar saltos en navegadores móviles */
-            height: 100vh;
             height: 100dvh; 
             overflow: hidden; 
         }
@@ -35,12 +36,10 @@
             position: relative; 
             display: flex; 
             flex-direction: column; 
-            height: 100vh; 
-            height: 100dvh;
+            height: 100%; 
             z-index: 1;
-            /* AJUSTE: Padding dinámico para respetar el Notch y la barra inferior del sistema */
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 20px); 
             justify-content: flex-start; 
         }
 
@@ -298,6 +297,15 @@
         const video = document.getElementById('top-video');
         video.play().catch(() => {});
     };
+
+    // CORRECCIÓN 2: Registro del Service Worker unificado correctamente
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW activo en Voucher'))
+                .catch(err => console.log('Error SW Voucher', err));
+        });
+    }
 </script>
 </body>
 </html>
