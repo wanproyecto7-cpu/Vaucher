@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Yape">
+    <meta name="theme-color" content="#752384">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <title>Yape</title>
+    <style>
+        :root { --purple-bg: #752384; --purple-dark: #4b1b6d; --gray-key: #f1f3f8; --dot-color: #d1d5db; --cyan-yape: #00d1c4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+        body, html { height: 100%; background: linear-gradient(var(--purple-bg), 45%, var(--purple-dark)); overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* Ajuste para Notch de iPhone y barras de estado */
+        .top-section { flex: 1.1; display: flex; align-items: center; justify-content: center; padding-top: env(safe-area-inset-top, 25px); }
+        .qr-container { background: white; padding: 12px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .qr-container img { width: 140px; display: block; }
+        
+        .nav-options-wrapper { width: 100%; display: flex; justify-content: center; padding-bottom: 12px; }
+        .nav-options { display: flex; gap: 4px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: white; width: 85px; }
+        .icon-bg { background-color: rgba(255, 255, 255, 0.15); width: 65px; height: 65px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; overflow: hidden; }
+        .icon-bg img { width: 100%; height: 100%; object-fit: cover; }
+        .nav-item p { font-size: 9.5px; text-align: center; line-height: 1.1; font-weight: 300; }
+        
+        .bottom-sheet { background: white; border-radius: 30px 30px 0 0; padding: 25px 22px env(safe-area-inset-bottom, 10px) 22px; display: flex; flex-direction: column; align-items: center; min-height: 48%; position: relative; }
+        .header-container { height: 45px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; width: 100%; }
+        .title { color: var(--purple-bg); font-weight: 700; font-size: 1.15rem; position: absolute; }
+        .pin-dots { display: flex; gap: 12px; opacity: 0; pointer-events: none; }
+        .dot { width: 10px; height: 10px; border: 1.5px solid var(--dot-color); border-radius: 50%; }
+        .dot.active { background: var(--purple-bg); border-color: var(--purple-bg); }
+        .hidden { opacity: 0 !important; }
+        .visible { opacity: 1 !important; }
+
+        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 360px; padding-bottom: 35px; }
+        .key { background: var(--gray-key); height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #333; overflow: hidden; }
+        .key:active { background: #dce0e8; transform: scale(0.95); }
+        .key video { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s; }
+        .key video.ready { opacity: 1; }
+        .key img { width: 80px; height: auto; object-fit: contain; }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
+        .modal-card { background: white; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+        
+        #loader .modal-card { width: 190px; padding: 25px 15px; border-radius: 16px; }
+        #loader .spinner { width: 32px; height: 32px; border: 3.5px solid #f3f3f3; border-top: 3.5px solid var(--cyan-yape); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; }
+
+        #error-modal .modal-card { width: 290px; padding: 30px 20px; border-radius: 20px; }
+        .btn-understood { border: none; background: transparent; color: var(--cyan-yape); font-weight: 800; text-transform: uppercase; margin-top: 20px; cursor: pointer; }
+
+        #admin-panel .modal-card { text-align: left; width: 320px; padding: 30px 25px 25px; border-radius: 20px; align-items: flex-start; }
+        #admin-panel h3 { color: var(--purple-bg); margin-bottom: 15px; align-self: center; }
+        .admin-input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; -webkit-user-select: text; user-select: text; }
+        .error-msg { color: #ff4444; font-size: 11px; font-weight: 600; margin-bottom: 8px; display: none; }
+        .btn-save { width: 100%; background: var(--cyan-yape); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; margin-top: 10px; }
+        .close-x { position: absolute; top: 12px; right: 15px; font-size: 20px; font-weight: bold; color: #999; cursor: pointer; }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="top-section"><div class="qr-container"><img src="P0.jpg"></div></div>
+
+    <div class="nav-options-wrapper">
+        <div class="nav-options">
+            <div class="nav-item"><div class="icon-bg"><img src="P1.jpg"></div><p>Olvido de <br> clave</p></div>
+            <div class="nav-item"><div class="icon-bg"><img src="P2.jpg"></div><p>Cambio de <br>número</p></div>
+            <div class="nav-item" ondblclick="openAdmin()"><div class="icon-bg"><img src="P3.jpg"></div><p>Ayuda</p></div>
+        </div>
+    </div>
+
+    <div class="bottom-sheet">
+        <div class="header-container">
+            <h2 class="title" id="main-title">Ingresa tu clave</h2>
+            <div class="pin-dots" id="dots-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div class="keyboard" id="numpad"></div>
+    </div>
+
+    <div id="loader" class="overlay"><div class="modal-card"><div class="spinner"></div><p>Validando datos</p></div></div>
+
+    <div id="error-modal" class="overlay">
+        <div class="modal-card">
+            <h3 style="margin-bottom:10px;">Clave incorrecta</h3>
+            <p>La clave que ingresaste es incorrecta.</p>
+            <button class="btn-understood" onclick="closeError()">ENTENDIDO</button>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="overlay" onclick="closeAdmin(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <span class="close-x" onclick="document.getElementById('admin-panel').style.display='none'">×</span>
+            <h3>Panel de Control</h3>
+            
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">Saldo Actual:</label>
+            <input type="number" id="cfg-balance" class="admin-input" step="0.01">
+            <p id="balance-error" class="error-msg">Para actualizar, el monto debe ser mínimo 1000</p>
+            
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">PIN de acceso:</label>
+            <input type="number" id="cfg-pin" class="admin-input" oninput="if(this.value.length > 6) this.value = this.value.slice(0,6);">
+            <p id="pin-error" class="error-msg">Error: solo se admiten 6 dígitos</p>
+            
+            <button class="btn-save" onclick="saveConfig()">GUARDAR Y CERRAR</button>
+        </div>
+    </div>
+
+    <script>
+        // REGISTRO DEL SERVICE WORKER
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado', reg))
+                    .catch(err => console.log('Error al registrar SW', err));
+            });
+        }
+
+        let pinCode = "";
+        const getCorrectPin = () => localStorage.getItem('yape_pin') || "123456"; 
+
+        function renderKeyboard() {
+            const numpad = document.getElementById('numpad');
+            numpad.innerHTML = "";
+            let nums = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+            for (let i = 0; i < 9; i++) createKey(nums[i]);
+            createKey("1Vi.mp4", true, null, false, true); 
+            createKey(nums[9]); 
+            createKey("4P.jpg", true, del, true);
+        }
+
+        function createKey(val, isSpecial = false, action = null, isImage = false, isVideo = false) {
+            const div = document.createElement('div');
+            div.className = 'key';
+            if (isSpecial) div.style.background = "transparent";
+            if (isVideo) {
+                const v = document.createElement('video'); v.src = val; v.autoplay = v.loop = v.muted = v.playsInline = true;
+                v.oncanplay = () => v.classList.add('ready'); div.appendChild(v);
+            } else if (isImage) {
+                const img = document.createElement('img'); img.src = val; div.appendChild(img);
+            } else { div.innerText = val; }
+            div.onclick = action || (() => press(val));
+            document.getElementById('numpad').appendChild(div);
+        }
+
+        function press(n) {
+            if (typeof n !== 'number' || pinCode.length >= 6) return;
+            pinCode += n; updateUI();
+            if (pinCode.length === 6) validate();
+        }
+
+        function del() { if (pinCode.length > 0) { pinCode = pinCode.slice(0, -1); updateUI(); } }
+
+        function updateUI() {
+            const title = document.getElementById('main-title');
+            const dotsContainer = document.getElementById('dots-container');
+            const dots = document.querySelectorAll('.dot');
+            if (pinCode.length > 0) { title.classList.add('hidden'); dotsContainer.classList.add('visible'); } 
+            else { title.classList.remove('hidden'); dotsContainer.classList.remove('visible'); }
+            dots.forEach((d, i) => d.classList.toggle('active', i < pinCode.length));
+        }
+
+        function validate() {
+            document.getElementById('loader').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                if (pinCode === getCorrectPin()) {
+                    window.location.href = "index2.html";
+                } else {
+                    document.getElementById('error-modal').style.display = 'flex';
+                }
+            }, 800);
+        }
+
+        function closeError() {
+            document.getElementById('error-modal').style.display = 'none';
+            pinCode = "";
+            updateUI();
+            renderKeyboard();
+        }
+
+        function openAdmin() {
+            document.getElementById('admin-panel').style.display = 'flex';
+            document.getElementById('cfg-pin').value = getCorrectPin();
+            let currentBalance = localStorage.getItem('yape_balance') || "3,000.00";
+            let cleanNumber = currentBalance.replace(/,/g, '');
+            document.getElementById('cfg-balance').value = parseFloat(cleanNumber);
+            document.getElementById('cfg-balance').dataset.original = cleanNumber;
+            document.getElementById('balance-error').style.display = 'none';
+            document.getElementById('pin-error').style.display = 'none';
+        }
+
+        function saveConfig() {
+            const balanceInput = document.getElementById('cfg-balance').value;
+            const pin = document.getElementById('cfg-pin').value;
+            const originalValue = document.getElementById('cfg-balance').dataset.original;
+            let hasError = false;
+
+            if (pin.toString().length !== 6) {
+                document.getElementById('pin-error').style.display = 'block';
+                hasError = true;
+            }
+            const newVal = parseFloat(balanceInput);
+            if (balanceInput !== originalValue) {
+                if (isNaN(newVal) || newVal < 1000) {
+                    document.getElementById('balance-error').style.display = 'block';
+                    hasError = true;
+                }
+            }
+            if(hasError) return;
+
+            const formatted = newVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            localStorage.setItem('yape_balance', formatted);
+            localStorage.setItem('yape_pin', pin);
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+
+        function closeAdmin(e) { if(e.target.id === 'admin-panel') e.target.style.display = 'none'; }
+        function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+        renderKeyboard();
+    </script>
+</body>
+</html>

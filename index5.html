@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#501d79">
+
+    <title>Voucher Yape Real</title>
+    <style>
+        :root {
+            --yape-dark-top: #501d79; 
+            --yape-purple: #742284;
+            --yape-teal: #00d1B2;
+            --text-grey: #7d7d7d;
+            --text-black: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Open Sans', sans-serif; -webkit-user-select: none; user-select: none;}
+        
+        body { 
+            background-color: var(--yape-purple); 
+            display: flex; 
+            justify-content: center; 
+            /* AJUSTE: dVh para evitar saltos en navegadores móviles */
+            height: 100vh;
+            height: 100dvh; 
+            overflow: hidden; 
+        }
+        
+        .app-shell { 
+            width: 100%; 
+            max-width: 414px; 
+            background: linear-gradient(to bottom, var(--yape-dark-top) 0%, var(--yape-dark-top) 20%, var(--yape-purple) 50%, var(--yape-purple) 100%);
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            height: 100dvh;
+            z-index: 1;
+            /* AJUSTE: Padding dinámico para respetar el Notch y la barra inferior del sistema */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
+            justify-content: flex-start; 
+        }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+
+        .header-yape {
+            width: 100%;
+            height: 100px; 
+            display: flex;
+            align-items: center; 
+            justify-content: space-between;
+            padding: 0 25px; 
+            margin-top: -5px; 
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        
+        .video-logo-wrapper { 
+            width: 80px; 
+            height: 80px; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            position: relative;
+            background-color: var(--yape-dark-top) !important;
+            transform: translateX(-10px); 
+        }
+
+        .video-logo-wrapper::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 6;
+            background: 
+                linear-gradient(to right, var(--yape-dark-top) 0%, transparent 15%, transparent 85%, var(--yape-dark-top) 100%),
+                linear-gradient(to bottom, var(--yape-dark-top) 0%, transparent 15%, transparent 85%, var(--yape-dark-top) 100%);
+        }
+        
+        #top-video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            background-color: var(--yape-dark-top) !important;
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+        
+        .btn-close-circle { 
+            width: 40px; 
+            height: 40px; 
+            background-color: rgba(255, 255, 255, 0.12); 
+            border-radius: 50%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer; 
+            z-index: 40; 
+        }
+        .btn-close-circle svg { 
+            stroke: white; 
+            width: 20px; 
+            height: 20px; 
+            stroke-width: 3;
+        }
+
+        .main-card { 
+            width: 90%; 
+            background: white; 
+            border-radius: 18px; 
+            padding: 25px 20px 5px; 
+            margin: 0 auto; 
+            position: relative; 
+            z-index: 30; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+            flex-shrink: 0;
+        }
+
+        .card-header-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .yapeaste-text { color: var(--yape-purple); font-weight: 800; font-size: 22px; }
+        .share-btn { color: var(--yape-teal); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .share-icon-svg { width: 17px; height: 17px; stroke: var(--yape-teal); fill: none; stroke-width: 2.5; }
+        .amount-line { display: flex; align-items: flex-start; margin-bottom: 8px; margin-top: 5px; }
+        .s-symbol { color: var(--text-black); font-weight: 700; font-size: 34px; margin-right: 5px; margin-top: 2px; }
+        .amount-big { color: var(--text-black); font-weight: 500; font-size: 58px; line-height: 1;}
+        .recipient-name { color: var(--text-black); font-weight: 700; font-size: 20px; margin-bottom: 12px; }
+        .timedate-line { display: flex; align-items: center; gap: 12px; color: var(--text-grey); font-size: 14px; margin-bottom: 15px; }
+        .timedate-line span { display: inline-flex; align-items: center; }
+        .timedate-icon { width: 16px; height: 16px; stroke: var(--text-grey); fill: none; stroke-width: 2.2; margin-right: 6px; }
+        .thin-separator { width: 100%; height: 1px; background-color: #eeeeee; margin-bottom: 15px; }
+        .security-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .sec-label-wrapper { display: flex; align-items: center; gap: 8px; color: #888; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .info-icon-graphic { width: 18px; height: 18px; background-color: #00d1b2; border-radius: 50%; position: relative; display: inline-block; }
+        .info-icon-graphic::before { content: ''; position: absolute; width: 3px; height: 3px; background-color: white; border-radius: 50%; top: 4px; left: 50%; transform: translateX(-50%); }
+        .info-icon-graphic::after { content: ''; position: absolute; width: 2px; height: 6px; background-color: white; border-radius: 1px; top: 9px; left: 50%; transform: translateX(-50%); }
+        .sec-boxes { display: flex; gap: 6px; }
+        .sec-box { width: 32px; height: 38px; background-color: #f4f6f9; border-radius: 6px; display: flex; justify-content: center; align-items: center; color: var(--text-black); font-weight: 700; font-size: 16px; }
+        .trans-header { color: #888; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; }
+        .trans-table { width: 100%; display: flex; flex-direction: column; gap: 8px;}
+        .trans-row { display: flex; justify-content: space-between; width: 100%; align-items: center; }
+        .t-label { color: #444; font-size: 14px; }
+        .t-value { color: var(--text-black); font-size: 14px; font-weight: 700; text-align: right; }
+
+        .promo-img { 
+            width: 90%; 
+            max-height: 200px; 
+            object-fit: cover; 
+            border-radius: 15px;
+            margin: 30px auto 0; 
+            display: none; 
+            flex-shrink: 0;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body onload="lanzarConfetti()">
+
+<canvas id="confetti-canvas"></canvas>
+
+<div class="app-shell">
+    <div class="header-yape">
+        <div class="video-logo-wrapper">
+            <video id="top-video" autoplay loop muted playsinline preload="auto" onplay="this.style.opacity=1">
+                <source src="vid.mp4" type="video/mp4">
+            </video>
+        </div>
+        <div class="btn-close-circle" onclick="window.location.href='index2.html'">
+            <svg viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+    </div>
+
+    <div class="main-card">
+        <div class="card-header-line">
+            <h1 class="yapeaste-text">¡Yapeaste!</h1>
+            <div class="share-btn">
+                <svg class="share-icon-svg" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Compartir
+            </div>
+        </div>
+        <div class="amount-line">
+            <span class="s-symbol">S/</span>
+            <div id="display-monto" class="amount-big">0</div>
+        </div>
+        <div id="display-nombre" class="recipient-name">---</div>
+        <div class="timedate-line">
+            <span>
+                <svg class="timedate-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span id="display-date">-- ---. ----</span>
+            </span>
+            <span>|</span>
+            <span>
+                <svg class="timedate-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span id="display-time">--:-- p. m.</span>
+            </span>
+        </div>
+        <div class="thin-separator"></div>
+        <div class="security-line">
+            <div class="sec-label-wrapper">CÓDIGO DE SEGURIDAD <div class="info-icon-graphic"></div></div>
+            <div class="sec-boxes">
+                <div class="sec-box" id="code-1">-</div>
+                <div class="sec-box" id="code-2">-</div>
+                <div class="sec-box" id="code-3">-</div>
+            </div>
+        </div>
+        <div class="thin-separator"></div>
+        <div class="trans-header">DATOS DE LA TRANSACCIÓN</div>
+        <div class="trans-table">
+            <div class="trans-row"><span class="t-label">Nro. de celular</span><span id="display-phone-mask" class="t-value">*** *** ***</span></div>
+            <div class="trans-row"><span class="t-label">Destino</span><span class="t-value">Yape</span></div>
+            <div class="trans-row"><span class="t-label">Nro. de operación</span><span id="display-op" class="t-value">--------</span></div>
+        </div>
+    </div>
+
+    <img id="img-dinamica" src="" class="promo-img">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+    let confettiLanzado = false;
+    function lanzarConfetti() {
+        if (confettiLanzado) return;
+        confettiLanzado = true;
+        const colorMorado = '#742284';
+        const colorVerde = '#00d1B2';
+        const shapeConf = ['square'];
+        const fastDropConf = {
+            spread: 90, startVelocity: 85, gravity: 1.6, scalar: 2.2, shapes: shapeConf, ticks: 400, drift: 0.1
+        };
+        confetti({...fastDropConf, particleCount: 80, origin: { x: -0.1, y: -0.1 }, angle: -45, colors: [colorMorado]});
+        setTimeout(() => {
+            confetti({...fastDropConf, particleCount: 80, origin: { x: 1.1, y: -0.1 }, angle: -135, colors: [colorVerde]});
+        }, 60);
+        const bigFastDrop = {...fastDropConf, particleCount: 6, scalar: 9.0, gravity: 1.5};
+        confetti({...bigFastDrop, origin: { x: -0.1, y: -0.1 }, angle: -40, colors: [colorMorado]});
+        setTimeout(() => {
+            confetti({...bigFastDrop, origin: { x: 1.1, y: -0.1 }, angle: -140, colors: [colorVerde]});
+        }, 60);
+    }
+
+    function elegirImagen() {
+        const img = document.getElementById('img-dinamica');
+        const ahora = new Date().getTime();
+        const unDia = 1 * 60 * 60 * 1000;
+
+        let primerCarga = localStorage.getItem('yape_primer_carga');
+        
+        if (!primerCarga || (ahora - parseInt(primerCarga) > unDia)) {
+            img.src = "ba.jpg";
+            localStorage.setItem('yape_primer_carga', ahora.toString());
+        } else {
+            const numAzar = Math.floor(Math.random() * 7) + 1;
+            img.src = `trans${numAzar}.jpg`;
+        }
+        img.style.display = 'block';
+    }
+
+    window.onload = () => {
+        elegirImagen();
+
+        const montoRaw = localStorage.getItem('yape_monto');
+        const nombre = localStorage.getItem('yape_nombre');
+        const telMask = localStorage.getItem('yape_telefono_mask');
+        
+        if (montoRaw) {
+            const montoNumerico = parseFloat(montoRaw);
+            if (montoNumerico % 1 === 0) {
+                document.getElementById('display-monto').innerText = montoNumerico.toString();
+            } else {
+                document.getElementById('display-monto').innerText = montoNumerico.toFixed(2);
+            }
+        }
+        
+        if (nombre) document.getElementById('display-nombre').innerText = nombre;
+        if (telMask) document.getElementById('display-phone-mask').innerText = telMask;
+        
+        document.getElementById('code-1').innerText = Math.floor(Math.random() * 10);
+        document.getElementById('code-2').innerText = Math.floor(Math.random() * 10);
+        document.getElementById('code-3').innerText = Math.floor(Math.random() * 10);
+        
+        const now = new Date();
+        const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
+        document.getElementById('display-date').innerText = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        
+        let hours = now.getHours();
+        const ampm = hours >= 12 ? 'p. m.' : 'a. m.';
+        hours = hours % 12 || 12;
+        document.getElementById('display-time').innerText = `${hours.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
+        
+        document.getElementById('display-op').innerText = Math.floor(Math.random() * 90000000) + 10000000;
+        lanzarConfetti();
+        
+        const video = document.getElementById('top-video');
+        video.play().catch(() => {});
+    };
+</script>
+</body>
+</html>

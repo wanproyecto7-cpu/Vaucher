@@ -1,0 +1,25 @@
+{
+  "short_name": "Yape",
+  "name": "Yape App",
+  "description": "Gestión de Vouchers Yape",
+  "icons": [
+    {
+      "src": "yp.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "yp.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#752384",
+  "theme_color": "#752384"
+}
