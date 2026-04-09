@@ -10,7 +10,7 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './vid.mp4',
   './ba.jpg',
-  './yp.jpg'
+  './yp4.jpg'
 ];
 
 // Instalación: Guarda los archivos en el caché
