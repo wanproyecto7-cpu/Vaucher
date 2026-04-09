@@ -24,7 +24,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* AJUSTE: Altura dinámica para evitar que el teclado o barras del navegador corten el diseño */
+        /* AJUSTE CRÍTICO: Anclaje para evitar desajustes al retroceder */
         body { 
             background-color: var(--yape-purple); 
             height: 100svh; 
@@ -33,10 +33,11 @@
             display: flex; 
             justify-content: center; 
             overscroll-behavior: none; 
-            position: fixed; /* Evita rebote en iOS */
+            position: fixed; /* Mantiene la posición fija al usar el botón atrás */
+            top: 0;
+            left: 0;
         }
 
-        /* AJUSTE: Padding superior automático según el dispositivo (Notch/Isla Dinámica) */
         .app-shell { 
             width: 100%; 
             max-width: 450px; 
@@ -47,7 +48,7 @@
             padding-top: env(safe-area-inset-top, 0px);
         }
 
-        /* HEADER: Altura flexible para no chocar con la cámara */
+        /* HEADER */
         .header { 
             height: 60px; 
             padding: 10px var(--margin-x) 0; 
@@ -66,7 +67,7 @@
             flex-shrink: 0;
             overflow: hidden;
         }
-        .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-circle img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.3);}
 
         .search-container {
             flex-grow: 1;
@@ -118,7 +119,7 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            overflow-y: auto; /* Permite scroll si la pantalla es pequeña */
+            overflow-y: auto; 
             min-height: 0; 
         }
         .action-container { width: 90%; position: relative; flex-shrink: 0; }
@@ -138,7 +139,7 @@
         .no-movs-text { color: #888; font-size: 12.5px; opacity: 0; transition: 0.3s; }
         .open .no-movs-text { opacity: 1; }
 
-        /* FOOTER: Ajustado con Safe Area Bottom para la barra de inicio de iPhone/Android */
+        /* FOOTER */
         .footer { 
             flex-shrink: 0;
             width: 100%; 
@@ -156,7 +157,7 @@
 <body oncontextmenu="return false;"> 
 <div class="app-shell">
     <div class="header">
-        <div class="profile-circle"><img src="hom.jpg"></div>
+        <div class="profile-circle"><img src="homb1.jpg"></div>
         <div class="search-container">
             <svg class="search-icon-svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <span class="search-placeholder">Buscar</span>
@@ -192,6 +193,14 @@
 </div>
 
 <script>
+    // FIX BOTÓN ATRÁS
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            document.body.style.height = '100svh';
+            window.scrollTo(0, 0);
+        }
+    });
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
     }
