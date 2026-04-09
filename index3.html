@@ -21,26 +21,29 @@
         
         body { 
             background: white; 
-            height: 100dvh; /* Ajuste para altura dinámica en navegadores móviles */
+            height: 100svh; /* Ajuste para altura dinámica real */
             width: 100vw;
             overflow: hidden; 
             display: flex; 
             justify-content: center; 
+            position: fixed; /* Evita rebote en iOS */
         }
         
-        /* El shell ahora gestiona el área segura superior (Notch) */
+        /* Ajuste para Notch / Isla Dinámica */
         .app-shell { 
             width: 100%; 
             max-width: 450px; 
             height: 100%; 
             position: relative; 
             padding-top: env(safe-area-inset-top, 0px); 
+            display: flex;
+            flex-direction: column;
         }
 
         /* --- [se1] SECCIÓN: BUSCADOR --- */
         #se1 { display: flex; flex-direction: column; height: 100%; width: 100%; background: white; }
-        .search-header { padding: 15px 20px; display: flex; align-items: center; }
-        .tabs { display: flex; border-bottom: 1px solid #eee; }
+        .search-header { padding: 15px 20px; display: flex; align-items: center; flex-shrink: 0; }
+        .tabs { display: flex; border-bottom: 1px solid #eee; flex-shrink: 0; }
         .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 700; color: #aaa; cursor: pointer; }
         .tab.active { color: var(--yape-purple); border-bottom: 2px solid var(--yape-purple); }
         
@@ -59,11 +62,11 @@
 
         /* --- [se2] SECCIÓN: MONTO --- */
         #se2 { display: none; flex-direction: column; height: 100%; width: 100%; align-items: center; background: white; position: relative; }
-        .se2-nav { width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .se2-nav { width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .btn-back { font-size: 35px; color: #666; cursor: pointer; font-weight: 300; }
         .btn-close { font-size: 22px; color: #666; cursor: pointer; }
         
-        .dest-info { text-align: center; margin-top: 10px; width: 100%; padding: 0 20px; }
+        .dest-info { text-align: center; margin-top: 10px; width: 100%; padding: 0 20px; flex-shrink: 0; }
         .editable-name { color: var(--yape-purple); font-weight: 700; font-size: 22px; border: none; outline: none; text-align: center; background: transparent; display: block; width: 100%; -webkit-user-select: text; user-select: text; }
         .pay-mask { color: #888; font-size: 14px; margin-top: 5px; }
 
@@ -79,7 +82,7 @@
         .msg-container { margin-top: 120px; width: 85%; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .msg-input { border: none; outline: none; text-align: center; width: 100%; font-size: 16px; color: #666; background: transparent; -webkit-user-select: text; user-select: text; }
 
-        /* FOOTER: Con ajuste env(safe-area-inset-bottom) para gestos de navegación */
+        /* FOOTER: Con ajuste env(safe-area-inset-bottom) para barra de navegación inferior */
         .se2-footer { 
             position: absolute; 
             bottom: 0; 
@@ -88,13 +91,13 @@
             display: flex; 
             gap: 12px; 
             background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
         }
         .btn-base { flex: 1; height: 55px; border-radius: 12px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn-others { background: white; border: 1.5px solid #eee; color: #b0b0b0; opacity: 0.5; }
         .btn-others.active { opacity: 1; color: #666; border-color: #ddd; }
         .btn-yapear-now { background: var(--yape-teal); color: white; letter-spacing: 1px; }
 
-        /* --- MODAL DE CARGA --- */
         .overlay-carga { 
             display: none; 
             position: absolute; 
@@ -131,7 +134,7 @@
     <div id="overlay" class="overlay-carga">
         <div class="modal-blanco">
             <div class="spinner"></div>
-            <div class="txt-yapeando">Yapeando</div>
+            <div class="txt-yapeando">Yapeandoles</div>
         </div>
     </div>
     
