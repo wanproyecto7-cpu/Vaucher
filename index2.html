@@ -24,18 +24,19 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* AJUSTE: Body ocupa el 100% real del viewport dinámico */
+        /* AJUSTE: Altura dinámica para evitar que el teclado o barras del navegador corten el diseño */
         body { 
             background-color: var(--yape-purple); 
-            height: 100dvh; 
+            height: 100svh; 
             width: 100vw;
             overflow: hidden; 
             display: flex; 
             justify-content: center; 
-            overscroll-behavior-y: contain; 
+            overscroll-behavior: none; 
+            position: fixed; /* Evita rebote en iOS */
         }
 
-        /* AJUSTE: El Shell ahora gestiona los espacios seguros (Notch) */
+        /* AJUSTE: Padding superior automático según el dispositivo (Notch/Isla Dinámica) */
         .app-shell { 
             width: 100%; 
             max-width: 450px; 
@@ -43,10 +44,10 @@
             display: flex; 
             flex-direction: column; 
             position: relative;
-            padding-top: env(safe-area-inset-top, 0px); /* Evita choque con la cámara */
+            padding-top: env(safe-area-inset-top, 0px);
         }
 
-        /* HEADER */
+        /* HEADER: Altura flexible para no chocar con la cámara */
         .header { 
             height: 60px; 
             padding: 10px var(--margin-x) 0; 
@@ -108,7 +109,7 @@
         .dot { width: 6px; height: 6px; background: rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; }
         .dot.active { width: 16px; background: white; border-radius: 10px; }
 
-        /* PANEL INFERIOR - Flex: 1 para ocupar el espacio restante */
+        /* PANEL INFERIOR */
         .bottom-panel { 
             background: white; 
             border-radius: 28px 28px 0 0; 
@@ -117,10 +118,10 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            overflow: hidden; 
+            overflow-y: auto; /* Permite scroll si la pantalla es pequeña */
             min-height: 0; 
         }
-        .action-container { width: 90%; position: relative; }
+        .action-container { width: 90%; position: relative; flex-shrink: 0; }
         .action { background: #FFF; padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #F0F0F0; box-shadow: 0 4px 12px rgba(0,0,0,0.12); cursor: pointer; }
         .left-content { display: flex; align-items: center; gap: 12px; color: var(--yape-purple); font-weight: 700; font-size: 14px; }
         #balance-text { color: #000; font-weight: 500; font-size: 15px; display: none; margin-left: auto; }
@@ -137,7 +138,7 @@
         .no-movs-text { color: #888; font-size: 12.5px; opacity: 0; transition: 0.3s; }
         .open .no-movs-text { opacity: 1; }
 
-        /* FOOTER - Ajustado con Safe Area Bottom */
+        /* FOOTER: Ajustado con Safe Area Bottom para la barra de inicio de iPhone/Android */
         .footer { 
             flex-shrink: 0;
             width: 100%; 
@@ -216,13 +217,13 @@
     let currentIdx = 0;
     setInterval(() => {
         currentIdx = (currentIdx + 1) % promoData.length;
-        const targetX = currentIdx * (window.innerWidth * 0.82 + 12);
+        const targetX = currentIdx * (scrollArea.offsetWidth * 0.82 + 12);
         scrollArea.scrollTo({ left: targetX, behavior: 'smooth' });
     }, 4500);
 
     scrollArea.addEventListener('scroll', () => {
         const dots = document.querySelectorAll('.dot');
-        const index = Math.round(scrollArea.scrollLeft / (window.innerWidth * 0.82));
+        const index = Math.round(scrollArea.scrollLeft / (scrollArea.offsetWidth * 0.82));
         dots.forEach((d, i) => d.classList.toggle('active', i === index));
     });
 
