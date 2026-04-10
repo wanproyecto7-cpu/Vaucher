@@ -21,15 +21,14 @@
         
         body { 
             background: white; 
-            height: 100svh; /* Ajuste para altura dinámica real */
+            height: 100svh; 
             width: 100vw;
             overflow: hidden; 
             display: flex; 
             justify-content: center; 
-            position: fixed; /* Evita rebote en iOS */
+            position: fixed; 
         }
         
-        /* Ajuste para Notch / Isla Dinámica */
         .app-shell { 
             width: 100%; 
             max-width: 450px; 
@@ -40,7 +39,6 @@
             flex-direction: column;
         }
 
-        /* --- [se1] SECCIÓN: BUSCADOR --- */
         #se1 { display: flex; flex-direction: column; height: 100%; width: 100%; background: white; }
         .search-header { padding: 15px 20px; display: flex; align-items: center; flex-shrink: 0; }
         .tabs { display: flex; border-bottom: 1px solid #eee; flex-shrink: 0; }
@@ -60,7 +58,6 @@
 
         .empty-state { text-align: center; color: #888; font-size: 14px; padding-top: 40px; width: 100%; }
 
-        /* --- [se2] SECCIÓN: MONTO --- */
         #se2 { display: none; flex-direction: column; height: 100%; width: 100%; align-items: center; background: white; position: relative; }
         .se2-nav { width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .btn-back { font-size: 35px; color: #666; cursor: pointer; font-weight: 300; }
@@ -82,7 +79,6 @@
         .msg-container { margin-top: 120px; width: 85%; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .msg-input { border: none; outline: none; text-align: center; width: 100%; font-size: 16px; color: #666; background: transparent; -webkit-user-select: text; user-select: text; }
 
-        /* FOOTER: Con ajuste env(safe-area-inset-bottom) para barra de navegación inferior */
         .se2-footer { 
             position: absolute; 
             bottom: 0; 
@@ -234,6 +230,7 @@
     function clearSearch() { inputBusq.value = ""; render(""); }
     inputBusq.oninput = (e) => render(e.target.value);
 
+    // Esta función ya no se usa para mostrar el nombre en pantalla
     function formatAst(fullStr) {
         if (!fullStr.includes(" ") || !isNaN(fullStr)) return fullStr;
         const parts = fullStr.trim().split(/\s+/);
@@ -254,7 +251,8 @@
     function irASe2(n, t) {
         document.getElementById('se1').style.display = 'none';
         document.getElementById('se2').style.display = 'flex';
-        document.getElementById('nombre-se2').value = formatAst(n);
+        // CAMBIO AQUÍ: Se asigna el nombre 'n' directamente sin pasar por formatAst
+        document.getElementById('nombre-se2').value = n;
         document.getElementById('mask-se2').innerText = "*** *** " + t.replace(/\s/g,'').slice(-3);
         telefonoRealGlobal = t.replace(/\s/g,''); 
         realAmt.value = "";
