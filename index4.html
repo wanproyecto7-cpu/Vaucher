@@ -78,7 +78,6 @@
         .v-symbol { font-size: 34px; font-weight: 700; margin-right: 5px; margin-top: 5px; }
         .v-amount-num { font-size: 58px; font-weight: 500; line-height: 1; }
         
-        /* AJUSTES DE FUENTE SOLICITADOS */
         .v-name { font-weight: 700; font-size: 18px; margin-bottom: 12px; color: var(--text-black); letter-spacing: -0.2px; }
         .v-data-label { color: #8e8e8e; font-size: 11.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.5px; }
         .v-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
@@ -230,14 +229,21 @@
         const imgPromo = document.getElementById('img-promo');
         const ahora = new Date().getTime();
         const unDia = 24 * 60 * 60 * 1000;
+        
+        // Recuperamos el tiempo de la primera carga para el reset de 24h
         let primerCarga = localStorage.getItem('yape_primer_carga_otros');
         
         if (!primerCarga || (ahora - parseInt(primerCarga) > unDia)) {
             imgPromo.src = "ba.jpg";
             localStorage.setItem('yape_primer_carga_otros', ahora.toString());
+            localStorage.setItem('yape_indice_orden', "0"); // Reset del orden
         } else {
-            const numAzar = Math.floor(Math.random() * 7) + 1;
-            imgPromo.src = `trans${numAzar}.jpg`;
+            // Lógica de orden secuencial (1, 2, 3, 4, 5, 6, 7)
+            let indiceActual = parseInt(localStorage.getItem('yape_indice_orden') || "0");
+            indiceActual = (indiceActual % 7) + 1; // Ciclo del 1 al 7
+            
+            imgPromo.src = `trans${indiceActual}.jpg`;
+            localStorage.setItem('yape_indice_orden', indiceActual.toString());
         }
     }
 
