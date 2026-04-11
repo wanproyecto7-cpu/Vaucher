@@ -179,7 +179,7 @@
             <input type="text" class="msg-input" placeholder="Agregar Mensaje" maxlength="40">
         </div>
         <div class="se2-footer">
-            <button id="btn-others" class="btn-base btn-others" onclick="location.href='index4.html'">Otros Bancos</button>
+            <button id="btn-others" class="btn-base btn-others" onclick="goToOthers()">Otros Bancos</button>
             <button class="btn-base btn-yapear-now" onclick="irAIndex5()">Yapear</button>
         </div>
     </div>
@@ -230,7 +230,6 @@
     function clearSearch() { inputBusq.value = ""; render(""); }
     inputBusq.oninput = (e) => render(e.target.value);
 
-    // Esta función ya no se usa para mostrar el nombre en pantalla
     function formatAst(fullStr) {
         if (!fullStr.includes(" ") || !isNaN(fullStr)) return fullStr;
         const parts = fullStr.trim().split(/\s+/);
@@ -251,8 +250,11 @@
     function irASe2(n, t) {
         document.getElementById('se1').style.display = 'none';
         document.getElementById('se2').style.display = 'flex';
-        // CAMBIO AQUÍ: Se asigna el nombre 'n' directamente sin pasar por formatAst
-        document.getElementById('nombre-se2').value = n;
+        
+        // AJUSTE: Guardamos el nombre REAL sin asteriscos
+        localStorage.setItem('yape_nombre_real', n); 
+
+        document.getElementById('nombre-se2').value = formatAst(n);
         document.getElementById('mask-se2').innerText = "*** *** " + t.replace(/\s/g,'').slice(-3);
         telefonoRealGlobal = t.replace(/\s/g,''); 
         realAmt.value = "";
@@ -272,6 +274,16 @@
 
     realAmt.onfocus = () => fakeCursor.style.display = 'inline-block';
     realAmt.onblur = () => fakeCursor.style.display = 'none';
+
+    // AJUSTE: Función para guardar datos antes de ir a Otros Bancos
+    function goToOthers() {
+        const valRaw = realAmt.value;
+        const amt = parseFloat(valRaw);
+        if (valRaw && !isNaN(amt) && amt > 0) {
+            localStorage.setItem('yape_monto', amt.toFixed(2));
+            location.href = 'index4.html';
+        }
+    }
 
     function irAIndex5() {
         const valRaw = realAmt.value;
