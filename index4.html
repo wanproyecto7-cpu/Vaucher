@@ -98,7 +98,7 @@
         .v-icon-svg { width: 16px; height: 16px; stroke: var(--text-grey); fill: none; stroke-width: 2.2; margin-right: 6px; }
 
         .v-sep { height: 1px; background: #eee; margin: 15px 0; }
-        .promo-img { width: 90%; border-radius: 15px; margin: 25px auto 0; display: block; max-height: 180px; object-fit: cover; }
+        .promo-img { width: 90%; border-radius: 15px; margin: 25px auto 0; display: none; max-height: 180px; object-fit: cover; }
         .btn-confirmar { width: 100%; background: var(--yape-teal); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-bottom: 10px; }
         .btn-cancelar { width: 100%; background: white; color: #888; border: 1.5px solid #eee; padding: 16px; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
     </style>
@@ -189,7 +189,7 @@
             <div class="v-row"><span>Destino</span><span class="val" id="v-destino">---</span></div>
             <div class="v-row"><span>Nro. de operación</span><span class="val" id="v-op">--------</span></div>
         </div>
-        <img id="img-promo" src="ba.jpg" class="promo-img">
+        <img id="img-promo" src="" class="promo-img">
     </div>
 </div>
 
@@ -239,21 +239,20 @@
     function elegirImagenPromo() {
         const imgPromo = document.getElementById('img-promo');
         const ahora = new Date().getTime();
-        const unDia = 24 * 60 * 60 * 1000;
+        const UNA_HORA = 1 * 60 * 60 * 1000; // 3600000 ms
         
-        let primerCarga = localStorage.getItem('yape_primer_carga_otros');
+        let ultimaCargaBa = localStorage.getItem('yape_ba_time_otros');
         
-        if (!primerCarga || (ahora - parseInt(primerCarga) > unDia)) {
+        // Si nunca se cargó o ya pasó más de una hora, mostramos ba.jpg
+        if (!ultimaCargaBa || (ahora - parseInt(ultimaCargaBa) > UNA_HORA)) {
             imgPromo.src = "ba.jpg";
-            localStorage.setItem('yape_primer_carga_otros', ahora.toString());
-            localStorage.setItem('yape_indice_orden', "0");
+            localStorage.setItem('yape_ba_time_otros', ahora.toString());
         } else {
-            let indiceActual = parseInt(localStorage.getItem('yape_indice_orden') || "0");
-            indiceActual = (indiceActual % 7) + 1;
-            
-            imgPromo.src = `trans${indiceActual}.jpg`;
-            localStorage.setItem('yape_indice_orden', indiceActual.toString());
+            // Durante esa hora, mostramos aleatorias del 1 al 7 (excluyendo ba.jpg)
+            const numAzar = Math.floor(Math.random() * 7) + 1;
+            imgPromo.src = `trans${numAzar}.jpg`;
         }
+        imgPromo.style.display = 'block';
     }
 
     function lanzarConfettiEstiloIndex5() {
@@ -283,7 +282,9 @@
     }
 
     function mostrarVoucher() {
+        // Ejecutamos la lógica de la imagen primero
         elegirImagenPromo();
+        
         document.getElementById('view-selection').style.display = 'none';
         document.getElementById('modalConfirm').style.display = 'none';
         
@@ -309,6 +310,9 @@
         document.getElementById('view-voucher').style.display = 'block';
         
         lanzarConfettiEstiloIndex5();
+        
+        const video = document.getElementById('top-video');
+        if(video) video.play().catch(() => {});
     }
 
     window.onload = renderBancos;
