@@ -13,12 +13,21 @@
             --text-grey: #7d7d7d;
             --text-black: #333333;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Open Sans', sans-serif; -webkit-user-select: none; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Open Sans', sans-serif; 
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
         
         body { background: white; height: 100svh; width: 100vw; display: flex; justify-content: center; overflow: hidden; }
         .app-shell { width: 100%; max-width: 450px; height: 100%; position: relative; display: flex; flex-direction: column; }
 
-        /* VISTA SELECCIÓN */
         #view-selection { display: flex; flex-direction: column; height: 100%; padding-top: env(safe-area-inset-top, 0px); }
         .header { padding: 10px 15px; display: flex; align-items: center; justify-content: flex-start; gap: 5px; }
         .btn-nav-back { font-size: 45px; color: #555; cursor: pointer; line-height: 1; font-weight: 300; padding: 5px; }
@@ -35,7 +44,7 @@
         .icon-circle-bank { width: 38px; height: 38px; border-radius: 50%; background: var(--light-purple); display: flex; align-items: center; justify-content: center; }
         .icon-circle-bank svg { width: 22px; height: 22px; fill: var(--yape-purple); }
 
-        /* MODAL CONFIRMACIÓN */
+        /* MODAL */
         .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 30px 20px 40px; text-align: center; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -54,7 +63,7 @@
         .checkbox-container.checked { background: var(--yape-teal); border-color: var(--yape-teal); }
         .checkbox-container.checked::after { content: '✓'; position: absolute; color: white; font-size: 16px; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; }
 
-        /* VISTA VOUCHER */
+        /* VOUCHER */
         #view-voucher { display: none; height: 100%; width: 100%; background: linear-gradient(to bottom, var(--yape-dark-purple) 0%, var(--yape-purple) 60%); padding-top: env(safe-area-inset-top, 0px); z-index: 100; }
         .header-voucher { display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; margin-top: 5px; }
         
@@ -113,8 +122,8 @@
         </div>
     </div>
 
-    <div id="modalConfirm" class="modal-overlay">
-        <div class="modal-content">
+    <div id="modalConfirm" class="modal-overlay" onclick="cerrarModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <div class="icon-circle-bank" style="margin: 0 auto 15px; width: 60px; height: 60px;">
                 <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
             </div>
@@ -144,7 +153,9 @@
     <div id="view-voucher">
         <div class="header-voucher">
             <div class="video-wrapper">
-                <video id="top-video" autoplay loop muted playsinline><source src="vid.mp4" type="video/mp4"></video>
+                <video id="top-video" autoplay loop muted playsinline poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                    <source src="vid.mp4" type="video/mp4">
+                </video>
             </div>
             <div class="close-v" onclick="window.location.href='index2.html'">
                 <svg viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -245,7 +256,6 @@
         }
     }
 
-    // NUEVO CONFETTI ESTILO INDEX 5
     function lanzarConfettiEstiloIndex5() {
         const colorMorado = '#742284';
         const colorVerde = '#00d1B2';
@@ -260,13 +270,11 @@
             drift: 0.1
         };
 
-        // Papeles normales
         confetti({...fastDropConf, particleCount: 80, origin: { x: -0.1, y: -0.1 }, angle: -45, colors: [colorMorado]});
         setTimeout(() => {
             confetti({...fastDropConf, particleCount: 80, origin: { x: 1.1, y: -0.1 }, angle: -135, colors: [colorVerde]});
         }, 60);
 
-        // Papeles grandes (Big Drops)
         const bigFastDrop = {...fastDropConf, particleCount: 6, scalar: 9.0, gravity: 1.5};
         confetti({...bigFastDrop, origin: { x: -0.1, y: -0.1 }, angle: -40, colors: [colorMorado]});
         setTimeout(() => {
@@ -300,7 +308,6 @@
 
         document.getElementById('view-voucher').style.display = 'block';
         
-        // Ejecución del confetti actualizado
         lanzarConfettiEstiloIndex5();
     }
 
