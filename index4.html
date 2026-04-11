@@ -230,31 +230,47 @@
         const ahora = new Date().getTime();
         const unDia = 24 * 60 * 60 * 1000;
         
-        // Recuperamos el tiempo de la primera carga para el reset de 24h
         let primerCarga = localStorage.getItem('yape_primer_carga_otros');
         
         if (!primerCarga || (ahora - parseInt(primerCarga) > unDia)) {
             imgPromo.src = "ba.jpg";
             localStorage.setItem('yape_primer_carga_otros', ahora.toString());
-            localStorage.setItem('yape_indice_orden', "0"); // Reset del orden
+            localStorage.setItem('yape_indice_orden', "0");
         } else {
-            // Lógica de orden secuencial (1, 2, 3, 4, 5, 6, 7)
             let indiceActual = parseInt(localStorage.getItem('yape_indice_orden') || "0");
-            indiceActual = (indiceActual % 7) + 1; // Ciclo del 1 al 7
+            indiceActual = (indiceActual % 7) + 1;
             
             imgPromo.src = `trans${indiceActual}.jpg`;
             localStorage.setItem('yape_indice_orden', indiceActual.toString());
         }
     }
 
+    // NUEVO CONFETTI ESTILO INDEX 5
     function lanzarConfettiEstiloIndex5() {
         const colorMorado = '#742284';
         const colorVerde = '#00d1B2';
-        const fastDropConf = { spread: 90, startVelocity: 85, gravity: 1.6, scalar: 2.2, ticks: 400 };
+        const shapeConf = ['square'];
+        const fastDropConf = {
+            spread: 90, 
+            startVelocity: 85, 
+            gravity: 1.6, 
+            scalar: 2.2, 
+            shapes: shapeConf, 
+            ticks: 400, 
+            drift: 0.1
+        };
 
+        // Papeles normales
         confetti({...fastDropConf, particleCount: 80, origin: { x: -0.1, y: -0.1 }, angle: -45, colors: [colorMorado]});
         setTimeout(() => {
             confetti({...fastDropConf, particleCount: 80, origin: { x: 1.1, y: -0.1 }, angle: -135, colors: [colorVerde]});
+        }, 60);
+
+        // Papeles grandes (Big Drops)
+        const bigFastDrop = {...fastDropConf, particleCount: 6, scalar: 9.0, gravity: 1.5};
+        confetti({...bigFastDrop, origin: { x: -0.1, y: -0.1 }, angle: -40, colors: [colorMorado]});
+        setTimeout(() => {
+            confetti({...bigFastDrop, origin: { x: 1.1, y: -0.1 }, angle: -140, colors: [colorVerde]});
         }, 60);
     }
 
@@ -283,6 +299,8 @@
         document.getElementById('v-hora').innerText = `${h.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
 
         document.getElementById('view-voucher').style.display = 'block';
+        
+        // Ejecución del confetti actualizado
         lanzarConfettiEstiloIndex5();
     }
 
