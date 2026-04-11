@@ -27,10 +27,7 @@
         
         .content { padding: 0 20px; overflow-y: auto; flex: 1; }
         
-        /* CUADRO YAPE ACTUALIZADO */
         .card-yape { background: white; border-radius: 12px; padding: 10px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); margin-bottom: 25px; border: 1px solid #f0f0f0; cursor: pointer; }
-        .card-yape:active { background-color: #f9f9f9; }
-        
         .icon-yape { width: 32px; height: 32px; border-radius: 50%; }
         .section-title { color: var(--yape-purple); font-size: 15px; font-weight: 700; margin-bottom: 18px; }
         
@@ -57,27 +54,17 @@
         .checkbox-container.checked { background: var(--yape-teal); border-color: var(--yape-teal); }
         .checkbox-container.checked::after { content: '✓'; position: absolute; color: white; font-size: 16px; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; }
 
-        /* VISTA VOUCHER - OPTIMIZADA CON RECORTE MÁS DELGADO */
+        /* VISTA VOUCHER */
         #view-voucher { display: none; height: 100%; width: 100%; background: linear-gradient(to bottom, var(--yape-dark-purple) 0%, var(--yape-purple) 60%); padding-top: env(safe-area-inset-top, 0px); z-index: 100; }
         .header-voucher { display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; margin-top: 5px; }
         
         .video-wrapper { 
-            width: 80px; 
-            height: 80px; 
-            overflow: hidden; 
-            position: relative; 
-            background: transparent;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 80px; height: 80px; overflow: hidden; position: relative; 
+            display: flex; justify-content: center; align-items: center;
             -webkit-mask-image: radial-gradient(circle, black 65%, transparent 98%);
             mask-image: radial-gradient(circle, black 65%, transparent 98%);
         }
-        #top-video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-        }
+        #top-video { width: 100%; height: 100%; object-fit: contain; }
         
         .close-v { width: 40px; height: 40px; background: rgba(255,255,255,0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .close-v svg { stroke: white; width: 20px; height: 20px; stroke-width: 3; }
@@ -87,19 +74,22 @@
         .v-yapeaste { color: var(--yape-purple); font-weight: 800; font-size: 22px; }
         .v-share { color: var(--yape-teal); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
         
-        .v-amount-box { display: flex; align-items: flex-start; margin-bottom: 5px; color: var(--text-black); }
+        .v-amount-box { display: flex; align-items: flex-start; margin-bottom: 1px; color: var(--text-black); }
         .v-symbol { font-size: 34px; font-weight: 700; margin-right: 5px; margin-top: 5px; }
         .v-amount-num { font-size: 58px; font-weight: 500; line-height: 1; }
-        .v-name { font-weight: 700; font-size: 24px; margin-bottom: 12px; color: var(--text-black); }
         
+        /* AJUSTES DE FUENTE SOLICITADOS */
+        .v-name { font-weight: 700; font-size: 18px; margin-bottom: 12px; color: var(--text-black); letter-spacing: -0.2px; }
+        .v-data-label { color: #8e8e8e; font-size: 11.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.5px; }
+        .v-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .v-row span { font-size: 14.5px; color: #666666; }
+        .v-row .val { font-weight: 700; font-size: 14.5px; color: var(--text-black); }
+
         .v-date-line { display: flex; align-items: center; gap: 12px; color: var(--text-grey); font-size: 14px; margin-bottom: 15px; }
         .v-date-line span { display: inline-flex; align-items: center; }
         .v-icon-svg { width: 16px; height: 16px; stroke: var(--text-grey); fill: none; stroke-width: 2.2; margin-right: 6px; }
 
         .v-sep { height: 1px; background: #eee; margin: 15px 0; }
-        .v-data-label { color: #888; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
-        .v-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 8px; color: var(--text-black); }
-        
         .promo-img { width: 90%; border-radius: 15px; margin: 25px auto 0; display: block; max-height: 180px; object-fit: cover; }
         .btn-confirmar { width: 100%; background: var(--yape-teal); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-bottom: 10px; }
         .btn-cancelar { width: 100%; background: white; color: #888; border: 1.5px solid #eee; padding: 16px; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
@@ -215,10 +205,8 @@
     }
 
     function toggleExtra() {
-        const panel = document.getElementById('extraPanel');
-        const btn = document.querySelector('.more-options-btn');
-        panel.classList.toggle('show');
-        btn.classList.toggle('active');
+        document.getElementById('extraPanel').classList.toggle('show');
+        document.querySelector('.more-options-btn').classList.toggle('active');
     }
 
     function toggleCheckbox() {
@@ -253,33 +241,14 @@
         }
     }
 
-    // Estilo de confetti rescatado del index5
     function lanzarConfettiEstiloIndex5() {
         const colorMorado = '#742284';
         const colorVerde = '#00d1B2';
-        const shapeConf = ['square'];
-        
-        const fastDropConf = {
-            spread: 90, 
-            startVelocity: 85, 
-            gravity: 1.6, 
-            scalar: 2.2, 
-            shapes: shapeConf, 
-            ticks: 400, 
-            drift: 0.1
-        };
+        const fastDropConf = { spread: 90, startVelocity: 85, gravity: 1.6, scalar: 2.2, ticks: 400 };
 
-        // Explosiones laterales sincronizadas
         confetti({...fastDropConf, particleCount: 80, origin: { x: -0.1, y: -0.1 }, angle: -45, colors: [colorMorado]});
         setTimeout(() => {
             confetti({...fastDropConf, particleCount: 80, origin: { x: 1.1, y: -0.1 }, angle: -135, colors: [colorVerde]});
-        }, 60);
-
-        // Cuadros grandes de fondo
-        const bigFastDrop = {...fastDropConf, particleCount: 6, scalar: 9.0, gravity: 1.5};
-        confetti({...bigFastDrop, origin: { x: -0.1, y: -0.1 }, angle: -40, colors: [colorMorado]});
-        setTimeout(() => {
-            confetti({...bigFastDrop, origin: { x: 1.1, y: -0.1 }, angle: -140, colors: [colorVerde]});
         }, 60);
     }
 
@@ -308,8 +277,6 @@
         document.getElementById('v-hora').innerText = `${h.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
 
         document.getElementById('view-voucher').style.display = 'block';
-        
-        // Llamada al nuevo estilo
         lanzarConfettiEstiloIndex5();
     }
 
