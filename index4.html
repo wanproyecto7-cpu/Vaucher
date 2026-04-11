@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Yapear a - Otros Bancos</title>
+    <style>
+        :root { 
+            --yape-purple: #742284; 
+            --yape-dark-purple: #4c1e76;
+            --light-purple: #f3e5f5;
+            --yape-teal: #00d1B2;
+            --text-grey: #7d7d7d;
+            --text-black: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Open Sans', sans-serif; -webkit-user-select: none; }
+        
+        body { background: white; height: 100svh; width: 100vw; display: flex; justify-content: center; overflow: hidden; }
+        .app-shell { width: 100%; max-width: 450px; height: 100%; position: relative; display: flex; flex-direction: column; }
+
+        /* VISTA SELECCIÓN */
+        #view-selection { display: flex; flex-direction: column; height: 100%; padding-top: env(safe-area-inset-top, 0px); }
+        .header { padding: 10px 15px; display: flex; align-items: center; justify-content: flex-start; gap: 5px; }
+        .btn-nav-back { font-size: 45px; color: #555; cursor: pointer; line-height: 1; font-weight: 300; padding: 5px; }
+        .header-title { font-weight: 700; font-size: 19px; color: #333; }
+        .btn-nav-close { font-size: 24px; color: #666; cursor: pointer; margin-left: auto; padding: 10px; }
+        
+        .content { padding: 0 20px; overflow-y: auto; flex: 1; }
+        
+        /* CUADRO YAPE ACTUALIZADO */
+        .card-yape { background: white; border-radius: 12px; padding: 10px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); margin-bottom: 25px; border: 1px solid #f0f0f0; cursor: pointer; }
+        .card-yape:active { background-color: #f9f9f9; }
+        
+        .icon-yape { width: 32px; height: 32px; border-radius: 50%; }
+        .section-title { color: var(--yape-purple); font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+        
+        .bank-card { background: white; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #f8f8f8; cursor: pointer; margin-bottom: 12px; }
+        .icon-circle-bank { width: 38px; height: 38px; border-radius: 50%; background: var(--light-purple); display: flex; align-items: center; justify-content: center; }
+        .icon-circle-bank svg { width: 22px; height: 22px; fill: var(--yape-purple); }
+
+        /* MODAL CONFIRMACIÓN */
+        .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 30px 20px 40px; text-align: center; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .info-box { background: #f8f9fb; border-radius: 8px; padding: 15px; text-align: left; margin-bottom: 10px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .val { font-weight: 700; }
+        
+        .more-options-btn { display: flex; align-items: center; justify-content: flex-end; color: #666; font-size: 16px; font-weight: 600; margin-bottom: 10px; cursor: pointer; gap: 5px; }
+        .more-options-btn svg { fill: #666; width: 16px; transition: transform 0.3s; }
+        .more-options-btn.active svg { transform: rotate(180deg); }
+
+        .extra-panel { display: none; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; text-align: left; margin-bottom: 20px; align-items: center; gap: 12px; }
+        .extra-panel.show { display: flex; }
+        .checkbox-container { position: relative; width: 22px; height: 22px; background: white; border: 2px solid #ccc; border-radius: 4px; cursor: pointer; }
+        .checkbox-container.checked { background: var(--yape-teal); border-color: var(--yape-teal); }
+        .checkbox-container.checked::after { content: '✓'; position: absolute; color: white; font-size: 16px; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; }
+
+        /* VISTA VOUCHER - OPTIMIZADA CON RECORTE MÁS DELGADO */
+        #view-voucher { display: none; height: 100%; width: 100%; background: linear-gradient(to bottom, var(--yape-dark-purple) 0%, var(--yape-purple) 60%); padding-top: env(safe-area-inset-top, 0px); z-index: 100; }
+        .header-voucher { display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; margin-top: 5px; }
+        
+        .video-wrapper { 
+            width: 80px; 
+            height: 80px; 
+            overflow: hidden; 
+            position: relative; 
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-mask-image: radial-gradient(circle, black 65%, transparent 98%);
+            mask-image: radial-gradient(circle, black 65%, transparent 98%);
+        }
+        #top-video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+        }
+        
+        .close-v { width: 40px; height: 40px; background: rgba(255,255,255,0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .close-v svg { stroke: white; width: 20px; height: 20px; stroke-width: 3; }
+
+        .voucher-card { width: 90%; background: white; border-radius: 20px; margin: 0 auto; padding: 25px 20px 15px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.15); }
+        .v-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .v-yapeaste { color: var(--yape-purple); font-weight: 800; font-size: 22px; }
+        .v-share { color: var(--yape-teal); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        
+        .v-amount-box { display: flex; align-items: flex-start; margin-bottom: 5px; color: var(--text-black); }
+        .v-symbol { font-size: 34px; font-weight: 700; margin-right: 5px; margin-top: 5px; }
+        .v-amount-num { font-size: 58px; font-weight: 500; line-height: 1; }
+        .v-name { font-weight: 700; font-size: 24px; margin-bottom: 12px; color: var(--text-black); }
+        
+        .v-date-line { display: flex; align-items: center; gap: 12px; color: var(--text-grey); font-size: 14px; margin-bottom: 15px; }
+        .v-date-line span { display: inline-flex; align-items: center; }
+        .v-icon-svg { width: 16px; height: 16px; stroke: var(--text-grey); fill: none; stroke-width: 2.2; margin-right: 6px; }
+
+        .v-sep { height: 1px; background: #eee; margin: 15px 0; }
+        .v-data-label { color: #888; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+        .v-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 8px; color: var(--text-black); }
+        
+        .promo-img { width: 90%; border-radius: 15px; margin: 25px auto 0; display: block; max-height: 180px; object-fit: cover; }
+        .btn-confirmar { width: 100%; background: var(--yape-teal); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; margin-bottom: 10px; }
+        .btn-cancelar { width: 100%; background: white; color: #888; border: 1.5px solid #eee; padding: 16px; border-radius: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div id="view-selection">
+        <div class="header">
+            <span onclick="window.location.href='index3.html'" class="btn-nav-back">‹</span>
+            <span class="header-title">Yapear a</span>
+            <span onclick="window.location.href='index2.html'" class="btn-nav-close">✕</span>
+        </div>
+        <div class="content">
+            <div class="card-yape" onclick="window.location.href='index3.html'">
+                <img src="yp4.jpg" class="icon-yape" alt="Yape">
+                <span style="font-weight: 600;">Yape</span>
+            </div>
+            <h2 class="section-title">Selecciona una entidad financiera</h2>
+            <div id="lista-bancos"></div>
+        </div>
+    </div>
+
+    <div id="modalConfirm" class="modal-overlay">
+        <div class="modal-content">
+            <div class="icon-circle-bank" style="margin: 0 auto 15px; width: 60px; height: 60px;">
+                <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+            </div>
+            <div style="color: var(--yape-purple); margin-bottom: 5px;">Vas a yapear a:</div>
+            <div id="m-nombre" style="color: var(--yape-purple); font-weight: 800; font-size: 20px; margin-bottom: 25px;">---</div>
+            
+            <div class="info-box">
+                <div class="info-row"><span>Monto:</span><span class="val" id="m-monto">S/ 0.00</span></div>
+                <div class="info-row"><span>Destino:</span><span class="val" id="m-destino">---</span></div>
+            </div>
+
+            <div class="more-options-btn" onclick="toggleExtra()">
+                <span>Más opciones</span>
+                <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+            </div>
+
+            <div id="extraPanel" class="extra-panel" onclick="toggleCheckbox()">
+                <div id="customCheck" class="checkbox-container"></div>
+                <span style="color: #333; font-weight: 600; font-size: 15px;">Mostrar Nro. Celular</span>
+            </div>
+
+            <button class="btn-confirmar" onclick="mostrarVoucher()">Confirmar Yapeo</button>
+            <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="view-voucher">
+        <div class="header-voucher">
+            <div class="video-wrapper">
+                <video id="top-video" autoplay loop muted playsinline><source src="vid.mp4" type="video/mp4"></video>
+            </div>
+            <div class="close-v" onclick="window.location.href='index2.html'">
+                <svg viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+        </div>
+        <div class="voucher-card">
+            <div class="v-title-row">
+                <div class="v-yapeaste">¡Yapeaste!</div>
+                <div class="v-share">
+                    <svg style="width:17px; height:17px; stroke:var(--yape-teal); fill:none; stroke-width:2.5;" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    Compartir
+                </div>
+            </div>
+            <div class="v-amount-box"><span class="v-symbol">S/</span><span id="v-monto" class="v-amount-num">0</span></div>
+            <div class="v-name" id="v-nombre">---</div>
+            
+            <div class="v-date-line">
+                <span>
+                    <svg class="v-icon-svg" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span id="v-fecha">-- ---. 2026</span>
+                </span>
+                <span>|</span>
+                <span>
+                    <svg class="v-icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span id="v-hora">--:-- p. m.</span>
+                </span>
+            </div>
+
+            <div class="v-sep"></div>
+            <div class="v-data-label">Datos de la transacción</div>
+            <div class="v-row"><span>Destino</span><span class="val" id="v-destino">---</span></div>
+            <div class="v-row"><span>Nro. de operación</span><span class="val" id="v-op">--------</span></div>
+        </div>
+        <img id="img-promo" src="ba.jpg" class="promo-img">
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+    const entidades = [
+        { n: "Plin", d: "Plin" }, { n: "Bim", d: "Bim" }, { n: "Tunki", d: "Tunki" },
+        { n: "Agora / Oh!", d: "Agora" }, { n: "BCP", d: "Banco de Crédito" },
+        { n: "BBVA", d: "BBVA Perú" }, { n: "Interbank", d: "Interbank" },
+        { n: "Scotiabank", d: "Scotiabank" }, { n: "BanBif", d: "BanBif" },
+        { n: "Banco de la Nación", d: "Banco de la Nación" }
+    ];
+
+    function renderBancos() {
+        const container = document.getElementById('lista-bancos');
+        entidades.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'bank-card';
+            card.onclick = () => abrirModal(item.d);
+            card.innerHTML = `<div class="icon-circle-bank"><svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg></div><span style="font-weight:600;">${item.n}</span>`;
+            container.appendChild(card);
+        });
+    }
+
+    function toggleExtra() {
+        const panel = document.getElementById('extraPanel');
+        const btn = document.querySelector('.more-options-btn');
+        panel.classList.toggle('show');
+        btn.classList.toggle('active');
+    }
+
+    function toggleCheckbox() {
+        document.getElementById('customCheck').classList.toggle('checked');
+    }
+
+    function abrirModal(destino) {
+        const nombre = localStorage.getItem('yape_nombre_real') || localStorage.getItem('yape_nombre') || "Usuario";
+        const monto = localStorage.getItem('yape_monto') || "0.00";
+        document.getElementById('m-nombre').innerText = nombre;
+        document.getElementById('m-monto').innerText = "S/ " + parseFloat(monto).toFixed(2);
+        document.getElementById('m-destino').innerText = destino;
+        document.getElementById('modalConfirm').style.display = 'flex';
+    }
+
+    function cerrarModal() { 
+        document.getElementById('modalConfirm').style.display = 'none'; 
+    }
+
+    function elegirImagenPromo() {
+        const imgPromo = document.getElementById('img-promo');
+        const ahora = new Date().getTime();
+        const unDia = 24 * 60 * 60 * 1000;
+        let primerCarga = localStorage.getItem('yape_primer_carga_otros');
+        
+        if (!primerCarga || (ahora - parseInt(primerCarga) > unDia)) {
+            imgPromo.src = "ba.jpg";
+            localStorage.setItem('yape_primer_carga_otros', ahora.toString());
+        } else {
+            const numAzar = Math.floor(Math.random() * 7) + 1;
+            imgPromo.src = `trans${numAzar}.jpg`;
+        }
+    }
+
+    // Estilo de confetti rescatado del index5
+    function lanzarConfettiEstiloIndex5() {
+        const colorMorado = '#742284';
+        const colorVerde = '#00d1B2';
+        const shapeConf = ['square'];
+        
+        const fastDropConf = {
+            spread: 90, 
+            startVelocity: 85, 
+            gravity: 1.6, 
+            scalar: 2.2, 
+            shapes: shapeConf, 
+            ticks: 400, 
+            drift: 0.1
+        };
+
+        // Explosiones laterales sincronizadas
+        confetti({...fastDropConf, particleCount: 80, origin: { x: -0.1, y: -0.1 }, angle: -45, colors: [colorMorado]});
+        setTimeout(() => {
+            confetti({...fastDropConf, particleCount: 80, origin: { x: 1.1, y: -0.1 }, angle: -135, colors: [colorVerde]});
+        }, 60);
+
+        // Cuadros grandes de fondo
+        const bigFastDrop = {...fastDropConf, particleCount: 6, scalar: 9.0, gravity: 1.5};
+        confetti({...bigFastDrop, origin: { x: -0.1, y: -0.1 }, angle: -40, colors: [colorMorado]});
+        setTimeout(() => {
+            confetti({...bigFastDrop, origin: { x: 1.1, y: -0.1 }, angle: -140, colors: [colorVerde]});
+        }, 60);
+    }
+
+    function mostrarVoucher() {
+        elegirImagenPromo();
+        document.getElementById('view-selection').style.display = 'none';
+        document.getElementById('modalConfirm').style.display = 'none';
+        
+        const nombre = document.getElementById('m-nombre').innerText;
+        const monto = localStorage.getItem('yape_monto') || "0";
+        const destino = document.getElementById('m-destino').innerText;
+        
+        document.getElementById('v-nombre').innerText = nombre;
+        const mNum = parseFloat(monto);
+        document.getElementById('v-monto').innerText = mNum % 1 === 0 ? mNum.toString() : mNum.toFixed(2);
+        document.getElementById('v-destino').innerText = destino;
+        document.getElementById('v-op').innerText = Math.floor(Math.random() * 90000000) + 10000000;
+
+        const now = new Date();
+        const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
+        document.getElementById('v-fecha').innerText = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        
+        let h = now.getHours();
+        const ampm = h >= 12 ? 'p. m.' : 'a. m.';
+        h = h % 12 || 12;
+        document.getElementById('v-hora').innerText = `${h.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
+
+        document.getElementById('view-voucher').style.display = 'block';
+        
+        // Llamada al nuevo estilo
+        lanzarConfettiEstiloIndex5();
+    }
+
+    window.onload = renderBancos;
+</script>
+</body>
+</html>
