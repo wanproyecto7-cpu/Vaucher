@@ -9,27 +9,70 @@
     <meta name="theme-color" content="#752384">
     
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="yp.jpg">
 
     <title>Yape</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
     <style>
         :root { --purple-bg: #752384; --purple-dark: #4b1b6d; --gray-key: #f1f3f8; --dot-color: #d1d5db; --cyan-yape: #00d1c4; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
-        body, html { height: 100%; background: linear-gradient(var(--purple-bg), 45%, var(--purple-dark)); overflow: hidden; display: flex; flex-direction: column; }
         
-        /* Ajuste para Notch de iPhone y barras de estado */
-        .top-section { flex: 1.1; display: flex; align-items: center; justify-content: center; padding-top: env(safe-area-inset-top, 25px); }
-        .qr-container { background: white; padding: 12px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .qr-container img { width: 140px; display: block; }
+        body, html { 
+            height: 100svh; 
+            width: 100vw; 
+            background: linear-gradient(var(--purple-bg), 45%, var(--purple-dark)); 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            position: fixed; 
+            top: 0;
+            left: 0;
+        }
+        
+        .top-section { 
+            flex: 1.1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding-top: env(safe-area-inset-top, 25px); 
+        }
+        .qr-container { 
+            background: white; 
+            padding: 12px; 
+            border-radius: 18px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 164px;
+            height: 164px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-container img { 
+            max-width: 100%; 
+            max-height: 100%; 
+            display: block; 
+            border-radius: 10px; 
+            object-fit: contain;
+        }
         
         .nav-options-wrapper { width: 100%; display: flex; justify-content: center; padding-bottom: 12px; }
         .nav-options { display: flex; gap: 4px; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: white; width: 85px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: white; width: 85px; cursor: pointer; }
         .icon-bg { background-color: rgba(255, 255, 255, 0.15); width: 65px; height: 65px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; overflow: hidden; }
         .icon-bg img { width: 100%; height: 100%; object-fit: cover; }
         .nav-item p { font-size: 9.5px; text-align: center; line-height: 1.1; font-weight: 300; }
         
-        .bottom-sheet { background: white; border-radius: 30px 30px 0 0; padding: 25px 22px env(safe-area-inset-bottom, 10px) 22px; display: flex; flex-direction: column; align-items: center; min-height: 48%; position: relative; }
+        .bottom-sheet { 
+            background: white; 
+            border-radius: 30px 30px 0 0; 
+            padding: 25px 22px calc(10px + env(safe-area-inset-bottom, 10px)) 22px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 48%; 
+            position: relative; 
+        }
         .header-container { height: 45px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; width: 100%; }
         .title { color: var(--purple-bg); font-weight: 700; font-size: 1.15rem; position: absolute; }
         .pin-dots { display: flex; gap: 12px; opacity: 0; pointer-events: none; }
@@ -38,7 +81,7 @@
         .hidden { opacity: 0 !important; }
         .visible { opacity: 1 !important; }
 
-        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 360px; padding-bottom: 35px; }
+        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 360px; padding-bottom: 20px; }
         .key { background: var(--gray-key); height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #333; overflow: hidden; }
         .key:active { background: #dce0e8; transform: scale(0.95); }
         .key video { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s; }
@@ -54,24 +97,34 @@
         #error-modal .modal-card { width: 290px; padding: 30px 20px; border-radius: 20px; }
         .btn-understood { border: none; background: transparent; color: var(--cyan-yape); font-weight: 800; text-transform: uppercase; margin-top: 20px; cursor: pointer; }
 
-        #admin-panel .modal-card { text-align: left; width: 320px; padding: 30px 25px 25px; border-radius: 20px; align-items: flex-start; }
-        #admin-panel h3 { color: var(--purple-bg); margin-bottom: 15px; align-self: center; }
+        .admin-modal .modal-card { text-align: left; width: 320px; padding: 30px 25px 25px; border-radius: 20px; align-items: flex-start; }
+        .admin-modal h3 { color: var(--purple-bg); margin-bottom: 15px; align-self: center; }
         .admin-input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; -webkit-user-select: text; user-select: text; }
         .error-msg { color: #ff4444; font-size: 11px; font-weight: 600; margin-bottom: 8px; display: none; }
         .btn-save { width: 100%; background: var(--cyan-yape); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; margin-top: 10px; }
         .close-x { position: absolute; top: 12px; right: 15px; font-size: 20px; font-weight: bold; color: #999; cursor: pointer; }
-        
+
+        .qr-section { width: 100%; margin-top: 10px; }
+        .qr-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 5px 0; border-bottom: 1px solid #eee; }
+        .qr-content { display: none; padding: 15px 0; text-align: center; width: 100%; }
+        .qr-content.active { display: block; }
+        .arrow-icon { transition: transform 0.3s; color: var(--cyan-yape); font-size: 18px; font-weight: bold; }
+        .arrow-icon.down { transform: rotate(90deg); }
+        .qr-preview { width: 100px; height: 100px; border: 2px dashed #ddd; margin: 10px auto; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 10px; }
+        .qr-preview img { width: 100%; height: 100%; object-fit: contain; }
+        .unique-code { font-family: monospace; font-size: 12px; color: #666; background: #f8f8f8; padding: 4px; border-radius: 4px; display: block; margin-top: 5px; word-break: break-all; }
+
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="top-section"><div class="qr-container"><img src="P0.jpg"></div></div>
+    <div class="top-section"><div class="qr-container"><img src="P0.jpg" id="main-qr-img"></div></div>
 
     <div class="nav-options-wrapper">
         <div class="nav-options">
             <div class="nav-item"><div class="icon-bg"><img src="P1.jpg"></div><p>Olvido de <br> clave</p></div>
-            <div class="nav-item"><div class="icon-bg"><img src="P2.jpg"></div><p>Cambio de <br>número</p></div>
+            <div class="nav-item" ondblclick="openUserPanel()"><div class="icon-bg"><img src="P2.jpg"></div><p>Cambios de <br>número</p></div>
             <div class="nav-item" ondblclick="openAdmin()"><div class="icon-bg"><img src="P3.jpg"></div><p>Ayuda</p></div>
         </div>
     </div>
@@ -94,34 +147,65 @@
         </div>
     </div>
 
-    <div id="admin-panel" class="overlay" onclick="closeAdmin(event)">
+    <div id="admin-panel" class="overlay admin-modal" onclick="closeAdmin(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <span class="close-x" onclick="document.getElementById('admin-panel').style.display='none'">×</span>
             <h3>Panel de Control</h3>
-            
             <label style="font-size:11px; font-weight:700; margin-top:10px;">Saldo Actual:</label>
-            <input type="number" id="cfg-balance" class="admin-input" step="0.01">
-            <p id="balance-error" class="error-msg">Para actualizar, el monto debe ser mínimo 1000</p>
-            
+            <input type="number" id="cfg-balance" class="admin-input" step="0.01" placeholder="Ej: 3000.00">
             <label style="font-size:11px; font-weight:700; margin-top:10px;">PIN de acceso:</label>
-            <input type="number" id="cfg-pin" class="admin-input" oninput="if(this.value.length > 6) this.value = this.value.slice(0,6);">
-            <p id="pin-error" class="error-msg">Error: solo se admiten 6 dígitos</p>
-            
+            <input type="number" id="cfg-pin" class="admin-input" placeholder="Nuevo PIN de 6 dígitos" oninput="if(this.value.length > 6) this.value = this.value.slice(0,6);">
             <button class="btn-save" onclick="saveConfig()">GUARDAR Y CERRAR</button>
         </div>
     </div>
 
+    <div id="user-panel" class="overlay admin-modal" onclick="closeUserPanel(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <span class="close-x" onclick="document.getElementById('user-panel').style.display='none'">×</span>
+            <h3>Datos de Usuario</h3>
+            
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">Nombre Completo:</label>
+            <input type="text" id="cfg-name" class="admin-input" placeholder="Nombre que aparecerá">
+            
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">Número de Teléfono:</label>
+            <input type="tel" id="cfg-phone" class="admin-input" placeholder="Ej: 987654321" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+
+            <div class="qr-section">
+                <div class="qr-header" onclick="toggleQRUpload()">
+                    <span style="font-size:11px; font-weight:700;">Configurar código QR</span>
+                    <span class="arrow-icon" id="qr-arrow">›</span>
+                </div>
+                <div class="qr-content" id="qr-upload-area">
+                    <input type="file" id="qr-file" accept="image/*" style="display:none;" onchange="handleQRUpload(this)">
+                    <div class="qr-preview" onclick="document.getElementById('qr-file').click()" id="qr-preview-box">
+                        <span id="qr-placeholder" style="color:#ccc; font-size:24px;">+</span>
+                        <img id="qr-temp-img" style="display:none;">
+                    </div>
+                    <span id="qr-code-label" class="unique-code">Sin código generado</span>
+                </div>
+            </div>
+            
+            <button class="btn-save" style="background: var(--purple-bg);" onclick="saveUserData()">GUARDAR DATOS</button>
+        </div>
+    </div>
+
     <script>
-        // REGISTRO DEL SERVICE WORKER
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registrado', reg))
-                    .catch(err => console.log('Error al registrar SW', err));
-            });
+        const CODE_VERSION = "2.6"; 
+        if(localStorage.getItem('app_version') !== CODE_VERSION){
+            localStorage.clear();
+            localStorage.setItem('app_version', CODE_VERSION);
+            localStorage.setItem('yape_pin', "123456");
+            localStorage.setItem('yape_balance', "0.00");
         }
 
         let pinCode = "";
+        let currentQRBase64 = "";
+
+        window.onload = () => {
+            renderKeyboard();
+            document.getElementById('main-qr-img').src = "P0.jpg";
+        };
+
         const getCorrectPin = () => localStorage.getItem('yape_pin') || "123456"; 
 
         function renderKeyboard() {
@@ -169,60 +253,107 @@
             document.getElementById('loader').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('loader').style.display = 'none';
-                if (pinCode === getCorrectPin()) {
-                    window.location.href = "index2.html";
-                } else {
-                    document.getElementById('error-modal').style.display = 'flex';
-                }
+                if (pinCode === getCorrectPin()) { window.location.href = "index2.html"; } 
+                else { document.getElementById('error-modal').style.display = 'flex'; }
             }, 800);
         }
 
         function closeError() {
             document.getElementById('error-modal').style.display = 'none';
-            pinCode = "";
-            updateUI();
-            renderKeyboard();
+            pinCode = ""; updateUI(); renderKeyboard();
         }
 
         function openAdmin() {
+            const currentBalance = localStorage.getItem('yape_balance') || "0.00";
+            document.getElementById('cfg-balance').value = currentBalance.replace(/,/g, '');
+            document.getElementById('cfg-pin').value = localStorage.getItem('yape_pin') || "123456";
             document.getElementById('admin-panel').style.display = 'flex';
-            document.getElementById('cfg-pin').value = getCorrectPin();
-            let currentBalance = localStorage.getItem('yape_balance') || "3,000.00";
-            let cleanNumber = currentBalance.replace(/,/g, '');
-            document.getElementById('cfg-balance').value = parseFloat(cleanNumber);
-            document.getElementById('cfg-balance').dataset.original = cleanNumber;
-            document.getElementById('balance-error').style.display = 'none';
-            document.getElementById('pin-error').style.display = 'none';
         }
 
         function saveConfig() {
-            const balanceInput = document.getElementById('cfg-balance').value;
             const pin = document.getElementById('cfg-pin').value;
-            const originalValue = document.getElementById('cfg-balance').dataset.original;
-            let hasError = false;
+            const balanceStr = document.getElementById('cfg-balance').value;
+            const balance = parseFloat(balanceStr);
 
-            if (pin.toString().length !== 6) {
-                document.getElementById('pin-error').style.display = 'block';
-                hasError = true;
-            }
-            const newVal = parseFloat(balanceInput);
-            if (balanceInput !== originalValue) {
-                if (isNaN(newVal) || newVal < 1000) {
-                    document.getElementById('balance-error').style.display = 'block';
-                    hasError = true;
-                }
-            }
-            if(hasError) return;
-
-            const formatted = newVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            localStorage.setItem('yape_balance', formatted);
-            localStorage.setItem('yape_pin', pin);
-            document.getElementById('admin-panel').style.display = 'none';
+            if (pin.length === 6 && !isNaN(balance) && balance >= 1000) {
+                localStorage.setItem('yape_pin', pin);
+                localStorage.setItem('yape_balance', balance.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+                document.getElementById('admin-panel').style.display = 'none';
+                alert("Configuración guardada.");
+            } else { alert("Datos inválidos."); }
         }
 
+        function openUserPanel() {
+            document.getElementById('cfg-name').value = ""; 
+            document.getElementById('cfg-phone').value = ""; 
+            document.getElementById('qr-temp-img').style.display = 'none';
+            document.getElementById('qr-placeholder').style.display = 'block';
+            document.getElementById('qr-code-label').innerText = "Sin código generado";
+            currentQRBase64 = "";
+            document.getElementById('user-panel').style.display = 'flex';
+        }
+
+        function toggleQRUpload() {
+            const area = document.getElementById('qr-upload-area');
+            const arrow = document.getElementById('qr-arrow');
+            area.classList.toggle('active');
+            arrow.classList.toggle('down');
+        }
+
+        function handleQRUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const tempImg = new Image();
+                    tempImg.src = e.target.result;
+                    tempImg.onload = function() {
+                        const canvas = document.createElement("canvas");
+                        const ctx = canvas.getContext("2d");
+                        canvas.width = tempImg.width; canvas.height = tempImg.height;
+                        ctx.drawImage(tempImg, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        if (code) {
+                            currentQRBase64 = e.target.result;
+                            document.getElementById('qr-temp-img').src = currentQRBase64;
+                            document.getElementById('qr-temp-img').style.display = 'block';
+                            document.getElementById('qr-placeholder').style.display = 'none';
+                            document.getElementById('qr-code-label').innerText = code.data;
+                        } else { alert("QR no detectado."); }
+                    };
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function saveUserData() {
+            const newName = document.getElementById('cfg-name').value.trim();
+            const newPhone = document.getElementById('cfg-phone').value.replace(/\s+/g, '');
+            const newCode = document.getElementById('qr-code-label').innerText;
+            
+            if (newName === "") { alert("Ingresa un nombre."); return; }
+            if (newPhone.length !== 9) { alert("Número inválido."); return; }
+
+            if (newCode === "Sin código generado") {
+                const proceed = confirm("No has subido un QR. ¿Deseas guardar los datos de este usuario sin código QR?");
+                if (!proceed) return;
+                localStorage.setItem('yape_qr_code', "");
+                localStorage.setItem('yape_qr_img', "");
+            } else {
+                localStorage.setItem('yape_qr_code', newCode);
+                if(currentQRBase64) localStorage.setItem('yape_qr_img', currentQRBase64);
+            }
+
+            localStorage.setItem('yape_user_name', newName);
+            localStorage.setItem('yape_user_phone', newPhone);
+            
+            document.getElementById('user-panel').style.display = 'none';
+            alert("Datos vinculados correctamente.");
+        }
+
+        function closeUserPanel(e) { if(e.target.id === 'user-panel') e.target.style.display = 'none'; }
         function closeAdmin(e) { if(e.target.id === 'admin-panel') e.target.style.display = 'none'; }
         function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-        renderKeyboard();
     </script>
 </body>
 </html>
