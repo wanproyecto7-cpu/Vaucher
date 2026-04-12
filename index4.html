@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Yapear a - Otros Bancos</title>
     <style>
+        /* Mantenemos tus estilos exactamente igual */
         :root { 
             --yape-purple: #742284; 
             --yape-dark-purple: #4c1e76;
@@ -44,7 +45,6 @@
         .icon-circle-bank { width: 38px; height: 38px; border-radius: 50%; background: var(--light-purple); display: flex; align-items: center; justify-content: center; }
         .icon-circle-bank svg { width: 22px; height: 22px; fill: var(--yape-purple); }
 
-        /* MODAL */
         .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 30px 20px 40px; text-align: center; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -63,7 +63,6 @@
         .checkbox-container.checked { background: var(--yape-teal); border-color: var(--yape-teal); }
         .checkbox-container.checked::after { content: '✓'; position: absolute; color: white; font-size: 16px; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; }
 
-        /* VOUCHER */
         #view-voucher { display: none; height: 100%; width: 100%; background: linear-gradient(to bottom, var(--yape-dark-purple) 0%, var(--yape-purple) 60%); padding-top: env(safe-area-inset-top, 0px); z-index: 100; }
         .header-voucher { display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; margin-top: 5px; }
         
@@ -223,10 +222,18 @@
         document.getElementById('customCheck').classList.toggle('checked');
     }
 
+    // --- AQUÍ ESTÁ EL CAMBIO SOLICITADO ---
     function abrirModal(destino) {
-        const nombre = localStorage.getItem('yape_nombre_real') || localStorage.getItem('yape_nombre') || "Usuario";
+        // Prioridad: 1. Nombre editado en el panel (yape_nombre_real) | 2. Nombre del contacto (yape_nombre)
+        const nombreEditado = localStorage.getItem('yape_nombre_real');
+        const nombreBase = localStorage.getItem('yape_nombre');
+        
+        // Si el usuario borró el nombre en el panel, usamos el base. Si editó, el editado.
+        const nombreFinal = (nombreEditado && nombreEditado.trim() !== "") ? nombreEditado : (nombreBase || "Usuario");
+        
         const monto = localStorage.getItem('yape_monto') || "0.00";
-        document.getElementById('m-nombre').innerText = nombre;
+        
+        document.getElementById('m-nombre').innerText = nombreFinal;
         document.getElementById('m-monto').innerText = "S/ " + parseFloat(monto).toFixed(2);
         document.getElementById('m-destino').innerText = destino;
         document.getElementById('modalConfirm').style.display = 'flex';
@@ -239,16 +246,14 @@
     function elegirImagenPromo() {
         const imgPromo = document.getElementById('img-promo');
         const ahora = new Date().getTime();
-        const UNA_HORA = 1 * 60 * 60 * 1000; // 3600000 ms
+        const UNA_HORA = 1 * 60 * 60 * 1000;
         
         let ultimaCargaBa = localStorage.getItem('yape_ba_time_otros');
         
-        // Si nunca se cargó o ya pasó más de una hora, mostramos ba.jpg
         if (!ultimaCargaBa || (ahora - parseInt(ultimaCargaBa) > UNA_HORA)) {
             imgPromo.src = "ba.jpg";
             localStorage.setItem('yape_ba_time_otros', ahora.toString());
         } else {
-            // Durante esa hora, mostramos aleatorias del 1 al 7 (excluyendo ba.jpg)
             const numAzar = Math.floor(Math.random() * 7) + 1;
             imgPromo.src = `trans${numAzar}.jpg`;
         }
@@ -273,16 +278,9 @@
         setTimeout(() => {
             confetti({...fastDropConf, particleCount: 80, origin: { x: 1.1, y: -0.1 }, angle: -135, colors: [colorVerde]});
         }, 60);
-
-        const bigFastDrop = {...fastDropConf, particleCount: 6, scalar: 9.0, gravity: 1.5};
-        confetti({...bigFastDrop, origin: { x: -0.1, y: -0.1 }, angle: -40, colors: [colorMorado]});
-        setTimeout(() => {
-            confetti({...bigFastDrop, origin: { x: 1.1, y: -0.1 }, angle: -140, colors: [colorVerde]});
-        }, 60);
     }
 
     function mostrarVoucher() {
-        // Ejecutamos la lógica de la imagen primero
         elegirImagenPromo();
         
         document.getElementById('view-selection').style.display = 'none';
