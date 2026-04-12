@@ -10,6 +10,7 @@
     <meta name="theme-color" content="#742284">
 
     <title>Yape - Pantalla Principal</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         :root {
             --yape-purple: #742284; 
@@ -24,7 +25,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* AJUSTE CRÍTICO: Anclaje para evitar desajustes al retroceder */
         body { 
             background-color: var(--yape-purple); 
             height: 100svh; 
@@ -33,7 +33,7 @@
             display: flex; 
             justify-content: center; 
             overscroll-behavior: none; 
-            position: fixed; /* Mantiene la posición fija al usar el botón atrás */
+            position: fixed; 
             top: 0;
             left: 0;
         }
@@ -152,9 +152,53 @@
         .btn { flex: 1; height: 52px; border-radius: 8px; border: none; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
         .btn-qr { background: white; color: var(--yape-teal); border: 1px solid var(--yape-teal); }
         .btn-yape { background: var(--yape-teal); color: white; }
+
+        /* ESTILOS DEL ESCÁNER */
+        #qr-scanner-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000; display: none;
+            flex-direction: column;
+        }
+        #video-preview { width: 100%; height: 100%; object-fit: cover; }
+        .scanner-header {
+            position: absolute; top: 0; width: 100%; padding: 40px 20px;
+            display: flex; justify-content: space-between; align-items: center; color: white; z-index: 10;
+        }
+        .scanner-frame {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 250px; height: 250px; border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 20px; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+        }
+        .scanner-footer {
+            position: absolute; bottom: 0; width: 100%; padding: 30px;
+            display: flex; justify-content: center; z-index: 10;
+        }
+        .btn-gallery {
+            background: rgba(255,255,255,0.2); color: white; padding: 12px 25px;
+            border-radius: 30px; border: 1px solid white; font-weight: 600;
+        }
+
+        /* MODAL DE ERROR ESTILO YAPE */
+        #modal-error-qr {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2000; display: none;
+            align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: white; width: 85%; max-width: 320px; 
+            padding: 30px 20px; border-radius: 20px; text-align: center;
+        }
+        .modal-content h3 { color: var(--yape-purple); margin-bottom: 10px; font-weight: 800; }
+        .modal-content p { color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.4; }
+        .btn-modal {
+            background: var(--yape-teal); color: white; border: none;
+            padding: 12px 0; width: 100%; border-radius: 8px;
+            font-weight: 800; text-transform: uppercase; cursor: pointer;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;"> 
+
 <div class="app-shell">
     <div class="header">
         <div class="profile-circle"><img src="homb1.jpg"></div>
@@ -187,24 +231,135 @@
     </div>
 
     <div class="footer">
-        <button class="btn btn-qr"><img src="cua.jpg" style="width:20px;">ESCANEAR QR</button>
+        <button class="btn btn-qr" onclick="startScanner()"><img src="cua.jpg" style="width:20px;">ESCANEAR QR</button>
         <button class="btn btn-yape" onclick="window.location.href='index3.html'"><img src="avio.jpg" style="width:20px;">YAPEAR</button>
     </div>
 </div>
 
-<script>
-    // FIX BOTÓN ATRÁS
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-            document.body.style.height = '100svh';
-            window.scrollTo(0, 0);
-        }
-    });
+<div id="qr-scanner-overlay">
+    <div class="scanner-header">
+        <span onclick="stopScanner()" style="font-size: 24px; font-weight: bold;">✕</span>
+        <span style="font-weight: 600;">Escanear QR</span>
+        <div style="width:24px;"></div>
+    </div>
+    <video id="video-preview" playsinline></video>
+    <div class="scanner-frame"></div>
+    <div class="scanner-footer">
+        <button class="btn-gallery" onclick="document.getElementById('file-input').click()">SUBIR DESDE GALERÍA</button>
+        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="scanFromGallery(this)">
+    </div>
+</div>
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
+<div id="modal-error-qr">
+    <div class="modal-content">
+        <h3>QR no registrado</h3>
+        <p>El código QR escaneado no coincide con ningún usuario guardado en el sistema.</p>
+        <button class="btn-modal" onclick="closeErrorModal()">ENTENDIDO</button>
+    </div>
+</div>
+
+<script>
+    let videoStream = null;
+    let scanningActive = false;
+    let isErrorModalOpen = false;
+
+    async function startScanner() {
+        document.getElementById('qr-scanner-overlay').style.display = 'flex';
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            });
+            const video = document.getElementById('video-preview');
+            video.srcObject = videoStream;
+            video.play();
+            scanningActive = true;
+            requestAnimationFrame(tick);
+        } catch (err) {
+            alert("Acceso a cámara denegado.");
+            stopScanner();
+        }
     }
 
+    function stopScanner() {
+        scanningActive = false;
+        if (videoStream) videoStream.getTracks().forEach(track => track.stop());
+        document.getElementById('qr-scanner-overlay').style.display = 'none';
+    }
+
+    function tick() {
+        if (!scanningActive || isErrorModalOpen) {
+            if (scanningActive) requestAnimationFrame(tick);
+            return;
+        }
+        
+        const video = document.getElementById('video-preview');
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const canvas = document.createElement("canvas");
+            const scale = 0.8;
+            canvas.width = video.videoWidth * scale;
+            canvas.height = video.videoHeight * scale;
+            const ctx = canvas.getContext("2d");
+            ctx.filter = "contrast(1.2) brightness(1.1)";
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                checkQRCode(code.data);
+            }
+        }
+        requestAnimationFrame(tick);
+    }
+
+    function scanFromGallery(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    canvas.width = img.width; canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    if (code) checkQRCode(code.data);
+                    else showErrorModal();
+                };
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // --- AJUSTE: Función de validación sincronizada con el panel ---
+    function checkQRCode(scannedValue) {
+        const savedCode = localStorage.getItem('yape_qr_code');
+        const savedName = localStorage.getItem('yape_user_name') || "";
+        const savedPhone = localStorage.getItem('yape_user_phone') || "";
+
+        // Compara el link real leído por la cámara con el guardado en memoria
+        if (scannedValue && scannedValue.trim() === savedCode) {
+            stopScanner();
+            window.location.href = `index3.html?name=${encodeURIComponent(savedName)}&phone=${encodeURIComponent(savedPhone)}#monto`;
+        } else {
+            showErrorModal();
+        }
+    }
+
+    function showErrorModal() {
+        isErrorModalOpen = true;
+        document.getElementById('modal-error-qr').style.display = 'flex';
+    }
+
+    function closeErrorModal() {
+        isErrorModalOpen = false;
+        document.getElementById('modal-error-qr').style.display = 'none';
+        document.getElementById('file-input').value = ""; 
+    }
+
+    // --- LÓGICA DE INTERFAZ ---
     window.addEventListener('load', () => {
         const b = localStorage.getItem('yape_balance');
         if(b) document.getElementById('balance-text').innerText = "S/ " + b.replace('S/ ', '');
