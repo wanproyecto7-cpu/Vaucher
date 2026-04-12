@@ -208,20 +208,51 @@
     const fakeCursor = document.getElementById('fake-cursor');
     const btnOthers = document.getElementById('btn-others');
     const overlay = document.getElementById('overlay');
+    const inputNombreEditable = document.getElementById('nombre-se2');
 
-    window.onload = () => render("");
+    window.onload = () => {
+        render("");
+        // RECEPTOR DE DATOS DESDE EL ESCÁNER
+        const params = new URLSearchParams(window.location.search);
+        const nombreQR = params.get('name');
+        const fonoQR = params.get('phone');
+        
+        if (window.location.hash === '#monto' && nombreQR && fonoQR) {
+            irASe2Directo(nombreQR, fonoQR);
+        }
+    };
 
     function render(f) {
         lista.innerHTML = "";
-        const filtrados = contactos.filter(c => c.n.toLowerCase().includes(f.toLowerCase()) || c.t.includes(f));
-        if (f !== "" && filtrados.length === 0 && f.length < 9) {
+        const searchClean = f.replace(/\s/g, ''); 
+        const filtradosBase = contactos.filter(c => {
+            const nombreCoincide = c.n.toLowerCase().includes(f.toLowerCase());
+            const telefonoLimpio = c.t.replace(/\s/g, ''); 
+            return nombreCoincide || telefonoLimpio.includes(searchClean);
+        });
+
+        const nombreGuardado = localStorage.getItem('yape_user_name');
+        const telefonoGuardado = localStorage.getItem('yape_user_phone');
+        let contactoConfigEncontrado = null;
+
+        if (nombreGuardado && telefonoGuardado && searchClean !== "") {
+            const telGuardadoLimpio = telefonoGuardado.replace(/\s/g, '');
+            if (telGuardadoLimpio.includes(searchClean)) {
+                contactoConfigEncontrado = { n: nombreGuardado, t: telefonoGuardado };
+            }
+        }
+
+        if (f !== "" && filtradosBase.length === 0 && !contactoConfigEncontrado && f.length < 9) {
             msgVacio.style.display = "block"; lista.style.display = "none";
         } else {
             msgVacio.style.display = "none"; lista.style.display = "block";
-            filtrados.forEach(c => {
+            if (contactoConfigEncontrado) {
+                lista.innerHTML += `<div class="contact-item" onclick="irASe2Directo('${contactoConfigEncontrado.n}', '${contactoConfigEncontrado.t}')"><div class="c-info"><span class="c-name">${contactoConfigEncontrado.n}</span><span class="c-phone">${contactoConfigEncontrado.t}</span></div><img src="ne.jpg" class="c-icon-right"></div>`;
+            }
+            filtradosBase.forEach(c => {
                 lista.innerHTML += `<div class="contact-item" onclick="irASe2('${c.n}', '${c.t}')"><div class="c-info"><span class="c-name">${c.n}</span><span class="c-phone">${c.t}</span></div></div>`;
             });
-            if (f.length === 9 && filtrados.length === 0) {
+            if (f.length === 9 && filtradosBase.length === 0 && !contactoConfigEncontrado) {
                 lista.innerHTML += `<div class="contact-item" onclick="irASe2('${f}', '${f}')"><div class="c-info"><span class="c-name">${f}</span><span class="c-phone">Nuevo número</span></div><img src="ne.jpg" class="c-icon-right"></div>`;
             }
         }
@@ -235,26 +266,17 @@
         const parts = fullStr.trim().split(/\s+/);
         if (parts.length === 1) return parts[0];
         let result = parts[0] + " ";
-        if (parts.length === 3) {
-            result += parts[1].substring(0, 3) + "* ";
-            result += parts[2].substring(0, 1) + "*";
-        } else if (parts.length >= 4) {
-            result += parts[2].substring(0, 3) + "* ";
-            result += parts[3].substring(0, 1) + "*";
-        } else {
-            result += parts[1].substring(0, 3) + "*";
-        }
+        if (parts.length === 3) { result += parts[1].substring(0, 3) + "* "; result += parts[2].substring(0, 1) + "*"; }
+        else if (parts.length >= 4) { result += parts[2].substring(0, 3) + "* "; result += parts[3].substring(0, 1) + "*"; }
+        else { result += parts[1].substring(0, 3) + "*"; }
         return result;
     }
 
     function irASe2(n, t) {
         document.getElementById('se1').style.display = 'none';
         document.getElementById('se2').style.display = 'flex';
-        
-        // AJUSTE: Guardamos el nombre REAL sin asteriscos
         localStorage.setItem('yape_nombre_real', n); 
-
-        document.getElementById('nombre-se2').value = formatAst(n);
+        inputNombreEditable.value = formatAst(n);
         document.getElementById('mask-se2').innerText = "*** *** " + t.replace(/\s/g,'').slice(-3);
         telefonoRealGlobal = t.replace(/\s/g,''); 
         realAmt.value = "";
@@ -263,23 +285,35 @@
         setTimeout(() => realAmt.focus(), 100);
     }
 
+    function irASe2Directo(n, t) {
+        document.getElementById('se1').style.display = 'none';
+        document.getElementById('se2').style.display = 'flex';
+        localStorage.setItem('yape_nombre_real', n); 
+        inputNombreEditable.value = n; 
+        document.getElementById('mask-se2').innerText = "*** *** " + t.replace(/\s/g,'').slice(-3);
+        telefonoRealGlobal = t.replace(/\s/g,''); 
+        realAmt.value = "";
+        document.getElementById('display-amt').innerText = "0";
+        btnOthers.classList.remove('active');
+        setTimeout(() => realAmt.focus(), 100);
+    }
+
+    inputNombreEditable.oninput = (e) => { localStorage.setItem('yape_nombre_real', e.target.value); };
     function volverSe1() { document.getElementById('se2').style.display = 'none'; document.getElementById('se1').style.display = 'flex'; }
-    
     realAmt.oninput = (e) => { 
         let val = e.target.value;
         document.getElementById('display-amt').innerText = val === "" ? "0" : val; 
         if(val !== "" && parseFloat(val) > 0) btnOthers.classList.add('active');
         else btnOthers.classList.remove('active');
     };
-
     realAmt.onfocus = () => fakeCursor.style.display = 'inline-block';
     realAmt.onblur = () => fakeCursor.style.display = 'none';
 
-    // AJUSTE: Función para guardar datos antes de ir a Otros Bancos
     function goToOthers() {
         const valRaw = realAmt.value;
         const amt = parseFloat(valRaw);
         if (valRaw && !isNaN(amt) && amt > 0) {
+            localStorage.setItem('yape_nombre_real', inputNombreEditable.value);
             localStorage.setItem('yape_monto', amt.toFixed(2));
             location.href = 'index4.html';
         }
@@ -290,7 +324,7 @@
         const amt = parseFloat(valRaw);
         if (!valRaw || isNaN(amt) || amt <= 0 || amt > 500) return;
         localStorage.setItem('yape_monto', amt.toFixed(2));
-        localStorage.setItem('yape_nombre', document.getElementById('nombre-se2').value);
+        localStorage.setItem('yape_nombre', inputNombreEditable.value);
         localStorage.setItem('yape_telefono_mask', document.getElementById('mask-se2').innerText);
         localStorage.setItem('yape_telefono_real', telefonoRealGlobal); 
         overlay.style.display = 'flex';
