@@ -208,7 +208,7 @@
             </div>
         </div>
         <div class="thin-separator"></div>
-        <div class="trans-header">DATOS DE LA TRANSACCIÓNes</div>
+        <div class="trans-header">DATOS DE LA TRANSACCIÓN</div>
         <div class="trans-table">
             <div class="trans-row"><span class="t-label">Nro. de celular</span><span id="display-phone-mask" class="t-value">*** *** ***</span></div>
             <div class="trans-row"><span class="t-label">Destino</span><span class="t-value">Yape</span></div>
@@ -246,7 +246,6 @@
         const img = document.getElementById('img-dinamica');
         const ahora = new Date().getTime();
         const unDia = 1 * 60 * 60 * 1000;
-
         let primerCarga = localStorage.getItem('yape_primer_carga');
         
         if (!primerCarga || (ahora - parseInt(primerCarga) > unDia)) {
@@ -259,51 +258,76 @@
         img.style.display = 'block';
     }
 
+    // FUNCIÓN PARA ACTUALIZAR HISTORIAL Y RESTAR SALDO
+    function actualizarHistorialYSaldo(nombre, monto, fecha, hora, op, tel) {
+        let historial = JSON.parse(localStorage.getItem('yape_historial')) || [];
+        
+        // Evitamos duplicados si se refresca la página
+        if(historial.some(m => m.op === op)) return;
+
+        // Agregamos al inicio de la lista para que sea el primero en verse
+        historial.unshift({
+            titulo: nombre, 
+            monto: monto, 
+            fecha: fecha, 
+            hora: hora, 
+            op: op, 
+            telefono: tel, 
+            tipo: 'yape', 
+            timestamp: new Date().getTime()
+        });
+
+        localStorage.setItem('yape_historial', JSON.stringify(historial));
+
+        // Realizamos la resta del saldo principal
+        let saldo = parseFloat(localStorage.getItem('yape_balance')) || 1000.00;
+        localStorage.setItem('yape_balance', (saldo - parseFloat(monto)).toFixed(2));
+    }
+
     window.onload = () => {
         elegirImagen();
-
         const montoRaw = localStorage.getItem('yape_monto');
         const nombre = localStorage.getItem('yape_nombre');
         const telMask = localStorage.getItem('yape_telefono_mask');
-        
+        let montoDisp = "0.00";
+
         if (montoRaw) {
-            const montoNumerico = parseFloat(montoRaw);
-            if (montoNumerico % 1 === 0) {
-                document.getElementById('display-monto').innerText = montoNumerico.toString();
-            } else {
-                document.getElementById('display-monto').innerText = montoNumerico.toFixed(2);
-            }
+            const mNum = parseFloat(montoRaw);
+            montoDisp = (mNum % 1 === 0) ? mNum.toString() : mNum.toFixed(2);
+            document.getElementById('display-monto').innerText = montoDisp;
         }
-        
+
         if (nombre) document.getElementById('display-nombre').innerText = nombre;
         if (telMask) document.getElementById('display-phone-mask').innerText = telMask;
-        
+
         document.getElementById('code-1').innerText = Math.floor(Math.random() * 10);
         document.getElementById('code-2').innerText = Math.floor(Math.random() * 10);
         document.getElementById('code-3').innerText = Math.floor(Math.random() * 10);
-        
+
         const now = new Date();
         const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
-        document.getElementById('display-date').innerText = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
-        
-        let hours = now.getHours();
-        const ampm = hours >= 12 ? 'p. m.' : 'a. m.';
-        hours = hours % 12 || 12;
-        document.getElementById('display-time').innerText = `${hours.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
-        
-        document.getElementById('display-op').innerText = Math.floor(Math.random() * 90000000) + 10000000;
+        const fStr = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        document.getElementById('display-date').innerText = fStr;
+
+        let hrs = now.getHours();
+        const ampm = hrs >= 12 ? 'p. m.' : 'a. m.';
+        hrs = hrs % 12 || 12;
+        const hStr = `${hrs.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
+        document.getElementById('display-time').innerText = hStr;
+
+        const opStr = Math.floor(Math.random() * 90000000) + 10000000;
+        document.getElementById('display-op').innerText = opStr;
+
+        // Ejecución de la lógica de datos
+        actualizarHistorialYSaldo(nombre, montoDisp, fStr, hStr, opStr, telMask);
+
         lanzarConfetti();
-        
-        const video = document.getElementById('top-video');
-        video.play().catch(() => {});
+        document.getElementById('top-video').play().catch(() => {});
     };
 
-    // CORRECCIÓN 2: Registro del Service Worker unificado correctamente
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW activo en Voucher'))
-                .catch(err => console.log('Error SW Voucher', err));
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('Error SW', err));
         });
     }
 </script>
