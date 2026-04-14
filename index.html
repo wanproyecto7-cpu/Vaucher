@@ -191,11 +191,13 @@
 
     <script>
         const CODE_VERSION = "2.6"; 
+        
+        // --- MEJORA: Evitar reseteo de saldo si ya existe ---
         if(localStorage.getItem('app_version') !== CODE_VERSION){
-            localStorage.clear();
             localStorage.setItem('app_version', CODE_VERSION);
-            localStorage.setItem('yape_pin', "123456");
-            localStorage.setItem('yape_balance', "0.00");
+            if(!localStorage.getItem('yape_pin')) localStorage.setItem('yape_pin', "123456");
+            // No reseteamos yape_balance a 0 si ya tiene un valor
+            if(!localStorage.getItem('yape_balance')) localStorage.setItem('yape_balance', "0.00");
         }
 
         let pinCode = "";
@@ -265,31 +267,45 @@
 
         function openAdmin() {
             const currentBalance = localStorage.getItem('yape_balance') || "0.00";
-            document.getElementById('cfg-balance').value = currentBalance.replace(/,/g, '');
+            // Limpiamos formato para el input
+            document.getElementById('cfg-balance').value = currentBalance.toString().replace(/[^\d.]/g, '');
             document.getElementById('cfg-pin').value = localStorage.getItem('yape_pin') || "123456";
             document.getElementById('admin-panel').style.display = 'flex';
         }
 
+        // --- ACTUALIZACIÓN: Sincronización exacta con index2 ---
         function saveConfig() {
             const pin = document.getElementById('cfg-pin').value;
             const balanceStr = document.getElementById('cfg-balance').value;
             const balance = parseFloat(balanceStr);
 
-            if (pin.length === 6 && !isNaN(balance) && balance >= 1000) {
-                localStorage.setItem('yape_pin', pin);
-                localStorage.setItem('yape_balance', balance.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-                document.getElementById('admin-panel').style.display = 'none';
-                alert("Configuración guardada.");
-            } else { alert("Datos inválidos."); }
+            if (pin.length === 6 && !isNaN(balance)) {
+                if (balance >= 1000) {
+                    localStorage.setItem('yape_pin', pin);
+                    // Guardamos el balance limpio para que index2 lo detecte y aplique formato
+                    localStorage.setItem('yape_balance', balance.toFixed(2));
+                    document.getElementById('admin-panel').style.display = 'none';
+                    alert("Configuración guardada.");
+                } else {
+                    alert("El monto ingresado debe ser igual o mayor a 1,000.00");
+                }
+            } else { 
+                alert("Datos inválidos. El PIN debe tener 6 dígitos."); 
+            }
         }
 
         function openUserPanel() {
-            document.getElementById('cfg-name').value = ""; 
-            document.getElementById('cfg-phone').value = ""; 
-            document.getElementById('qr-temp-img').style.display = 'none';
-            document.getElementById('qr-placeholder').style.display = 'block';
-            document.getElementById('qr-code-label').innerText = "Sin código generado";
-            currentQRBase64 = "";
+            document.getElementById('cfg-name').value = localStorage.getItem('yape_user_name') || ""; 
+            document.getElementById('cfg-phone').value = localStorage.getItem('yape_user_phone') || ""; 
+            
+            const savedQR = localStorage.getItem('yape_qr_img');
+            if(savedQR) {
+                document.getElementById('qr-temp-img').src = savedQR;
+                document.getElementById('qr-temp-img').style.display = 'block';
+                document.getElementById('qr-placeholder').style.display = 'none';
+                document.getElementById('qr-code-label').innerText = localStorage.getItem('yape_qr_code') || "QR Guardado";
+            }
+            
             document.getElementById('user-panel').style.display = 'flex';
         }
 
@@ -326,6 +342,7 @@
             }
         }
 
+        // --- ACTUALIZACIÓN: Lógica de Directorio de Tiendas ---
         function saveUserData() {
             const newName = document.getElementById('cfg-name').value.trim();
             const newPhone = document.getElementById('cfg-phone').value.replace(/\s+/g, '');
@@ -334,21 +351,32 @@
             if (newName === "") { alert("Ingresa un nombre."); return; }
             if (newPhone.length !== 9) { alert("Número inválido."); return; }
 
+            // Obtenemos el directorio actual o creamos uno nuevo
+            let directory = JSON.parse(localStorage.getItem('yape_directory') || "{}");
+
             if (newCode === "Sin código generado") {
-                const proceed = confirm("No has subido un QR. ¿Deseas guardar los datos de este usuario sin código QR?");
+                const proceed = confirm("No has subido un QR. Esto guardará al usuario como el perfil predeterminado.");
                 if (!proceed) return;
-                localStorage.setItem('yape_qr_code', "");
-                localStorage.setItem('yape_qr_img', "");
+                // Guardado simple para compatibilidad
+                localStorage.setItem('yape_user_name', newName);
+                localStorage.setItem('yape_user_phone', newPhone);
             } else {
+                // Guardamos en el directorio usando el contenido del QR como llave
+                directory[newCode] = {
+                    name: newName,
+                    phone: newPhone
+                };
+                localStorage.setItem('yape_directory', JSON.stringify(directory));
+                
+                // También guardamos el último para que el panel lo muestre al reabrir
                 localStorage.setItem('yape_qr_code', newCode);
                 if(currentQRBase64) localStorage.setItem('yape_qr_img', currentQRBase64);
+                localStorage.setItem('yape_user_name', newName);
+                localStorage.setItem('yape_user_phone', newPhone);
             }
-
-            localStorage.setItem('yape_user_name', newName);
-            localStorage.setItem('yape_user_phone', newPhone);
             
             document.getElementById('user-panel').style.display = 'none';
-            alert("Datos vinculados correctamente.");
+            alert("Tienda vinculada al directorio correctamente.");
         }
 
         function closeUserPanel(e) { if(e.target.id === 'user-panel') e.target.style.display = 'none'; }
