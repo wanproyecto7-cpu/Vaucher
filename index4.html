@@ -222,15 +222,10 @@
         document.getElementById('customCheck').classList.toggle('checked');
     }
 
-    // --- AQUÍ ESTÁ EL CAMBIO SOLICITADO ---
     function abrirModal(destino) {
-        // Prioridad: 1. Nombre editado en el panel (yape_nombre_real) | 2. Nombre del contacto (yape_nombre)
         const nombreEditado = localStorage.getItem('yape_nombre_real');
         const nombreBase = localStorage.getItem('yape_nombre');
-        
-        // Si el usuario borró el nombre en el panel, usamos el base. Si editó, el editado.
         const nombreFinal = (nombreEditado && nombreEditado.trim() !== "") ? nombreEditado : (nombreBase || "Usuario");
-        
         const monto = localStorage.getItem('yape_monto') || "0.00";
         
         document.getElementById('m-nombre').innerText = nombreFinal;
@@ -298,15 +293,36 @@
 
         const now = new Date();
         const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
-        document.getElementById('v-fecha').innerText = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        const fechaTexto = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        document.getElementById('v-fecha').innerText = fechaTexto;
         
         let h = now.getHours();
         const ampm = h >= 12 ? 'p. m.' : 'a. m.';
         h = h % 12 || 12;
-        document.getElementById('v-hora').innerText = `${h.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
+        const horaTexto = `${h.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
+        document.getElementById('v-hora').innerText = horaTexto;
+
+        // --- LÓGICA DE HISTORIAL ---
+        const nuevoMovimiento = {
+            titulo: destino + " - " + nombre,
+            monto: monto,
+            fecha: fechaTexto,
+            hora: horaTexto
+        };
+        const historial = JSON.parse(localStorage.getItem('yape_historial')) || [];
+        historial.unshift(nuevoMovimiento);
+        localStorage.setItem('yape_historial', JSON.stringify(historial));
+
+        // --- LÓGICA DE ACTUALIZACIÓN DE SALDO ---
+        let saldoActual = localStorage.getItem('yape_balance') || "S/ 0.00";
+        let saldoNumerico = parseFloat(saldoActual.replace(/[^\d.]/g, ''));
+        
+        if (!isNaN(saldoNumerico)) {
+            let nuevoSaldo = saldoNumerico - mNum;
+            localStorage.setItem('yape_balance', "S/ " + nuevoSaldo.toFixed(2));
+        }
 
         document.getElementById('view-voucher').style.display = 'block';
-        
         lanzarConfettiEstiloIndex5();
         
         const video = document.getElementById('top-video');
