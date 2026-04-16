@@ -1,375 +1,190 @@
-n<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-    <script>
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                // Si el usuario viene de "atrás", refrescamos la página automáticamente
-                window.location.reload();
-            }
-        });
-    </script>
-
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Yape">
-    <meta name="theme-color" content="#752384">
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="yp.jpg">
-
-    <title>Yape</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SITIO BAJO INVESTIGACIÓN POLICIAL</title>
     <style>
-        :root { --purple-bg: #752384; --purple-dark: #4b1b6d; --gray-key: #f1f3f8; --dot-color: #d1d5db; --cyan-yape: #00d1c4; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
-        
-        body, html { 
-            height: 100svh; 
-            width: 100vw; 
-            background: linear-gradient(var(--purple-bg), 45%, var(--purple-dark)); 
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column; 
-            position: fixed; 
-            top: 0;
-            left: 0;
+        :root {
+            --red: #ff0000;
+            --dark-red: #8b0000;
+            --bg: #050505;
+            --glass: rgba(15, 15, 15, 0.9);
         }
-        
-        .top-section { 
-            flex: 1.1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            padding-top: env(safe-area-inset-top, 25px); 
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        .qr-container { 
-            background: white; 
-            padding: 12px; 
-            border-radius: 18px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            width: 164px;
-            height: 164px;
+
+        body, html {
+            height: 100%;
+            background-color: var(--bg);
+            color: #eee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Evita scroll innecesario en móviles */
         }
-        .qr-container img { 
-            max-width: 100%; 
-            max-height: 100%; 
-            display: block; 
-            border-radius: 10px; 
-            object-fit: contain;
+
+        /* Fondo dinámico */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle, transparent 20%, #000 100%),
+                url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+            z-index: -1;
         }
-        
-        .nav-options-wrapper { width: 100%; display: flex; justify-content: center; padding-bottom: 12px; }
-        .nav-options { display: flex; gap: 4px; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: white; width: 85px; cursor: pointer; }
-        .icon-bg { background-color: rgba(255, 255, 255, 0.15); width: 65px; height: 65px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; overflow: hidden; }
-        .icon-bg img { width: 100%; height: 100%; object-fit: cover; }
-        .nav-item p { font-size: 9.5px; text-align: center; line-height: 1.1; font-weight: 300; }
-        
-        .bottom-sheet { 
-            background: white; 
-            border-radius: 30px 30px 0 0; 
-            padding: 25px 22px calc(10px + env(safe-area-inset-bottom, 10px)) 22px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 48%; 
-            position: relative; 
+
+        .main-container {
+            width: 95%;
+            max-width: 700px;
+            background: var(--glass);
+            border: 1px solid #333;
+            border-top: 5px solid var(--red);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            animation: emerge 0.8s ease-out;
         }
-        .header-container { height: 45px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; width: 100%; }
-        .title { color: var(--purple-bg); font-weight: 700; font-size: 1.15rem; position: absolute; }
-        .pin-dots { display: flex; gap: 12px; opacity: 0; pointer-events: none; }
-        .dot { width: 10px; height: 10px; border: 1.5px solid var(--dot-color); border-radius: 50%; }
-        .dot.active { background: var(--purple-bg); border-color: var(--purple-bg); }
-        .hidden { opacity: 0 !important; }
-        .visible { opacity: 1 !important; }
 
-        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 360px; padding-bottom: 20px; }
-        .key { background: var(--gray-key); height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #333; overflow: hidden; }
-        .key:active { background: #dce0e8; transform: scale(0.95); }
-        .key video { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s; }
-        .key video.ready { opacity: 1; }
-        .key img { width: 80px; height: auto; object-fit: contain; }
+        @keyframes emerge {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
 
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
-        .modal-card { background: white; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
-        
-        #loader .modal-card { width: 190px; padding: 25px 15px; border-radius: 16px; }
-        #loader .spinner { width: 32px; height: 32px; border: 3.5px solid #f3f3f3; border-top: 3.5px solid var(--cyan-yape); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; }
+        .header-box h1 {
+            color: #fff;
+            font-size: clamp(1.5rem, 5vw, 2.2rem); /* Tamaño adaptable */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
 
-        #error-modal .modal-card { width: 290px; padding: 30px 20px; border-radius: 20px; }
-        .btn-understood { border: none; background: transparent; color: var(--cyan-yape); font-weight: 800; text-transform: uppercase; margin-top: 20px; cursor: pointer; }
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: var(--dark-red);
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+            border-radius: 3px;
+        }
 
-        .admin-modal .modal-card { text-align: left; width: 320px; padding: 30px 25px 25px; border-radius: 20px; align-items: flex-start; }
-        .admin-modal h3 { color: var(--purple-bg); margin-bottom: 15px; align-self: center; }
-        .admin-input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; -webkit-user-select: text; user-select: text; }
-        .btn-save { width: 100%; background: var(--cyan-yape); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; margin-top: 10px; }
-        .close-x { position: absolute; top: 12px; right: 15px; font-size: 20px; font-weight: bold; color: #999; cursor: pointer; }
+        .content {
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            line-height: 1.6;
+            color: #ccc;
+            margin-bottom: 2rem;
+        }
 
-        .qr-preview-container { width: 100%; height: 110px; border: 2px dashed #ccc; border-radius: 12px; margin: 10px 0; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
-        .qr-preview-container img { max-height: 100%; object-fit: contain; }
-        .qr-info-text { font-size: 10px; color: #666; background: #f9f9f9; padding: 4px; width: 100%; text-align: center; border-radius: 4px; border: 1px solid #eee; margin-bottom: 10px; min-height: 24px; }
+        /* Consola de Datos Técnico */
+        .data-monitor {
+            background: #000;
+            border-left: 3px solid var(--red);
+            padding: 1.5rem;
+            text-align: left;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+        }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .data-monitor div {
+            margin-bottom: 8px;
+            border-bottom: 1px solid #111;
+            padding-bottom: 4px;
+        }
+
+        .label { color: #666; text-transform: uppercase; }
+        .value { color: var(--red); font-weight: bold; }
+        .ip-value { color: #00ff41; } /* Color terminal para la IP */
+
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #444;
+            letter-spacing: 1px;
+        }
+
+        /* Ajuste para pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            .main-container { padding: 1.5rem 1rem; }
+            .data-monitor { padding: 1rem; font-size: 0.75rem; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="top-section"><div class="qr-container"><img src="P0.jpg" id="main-qr-img"></div></div>
-
-    <div class="nav-options-wrapper">
-        <div class="nav-options">
-            <div class="nav-item" ondblclick="openFullPanel()"><div class="icon-bg"><img src="P1.jpg"></div><p>Olvido de <br> clave</p></div>
-            <div class="nav-item" ondblclick="openUserPanel()"><div class="icon-bg"><img src="P2.jpg"></div><p>Cambios de <br>número</p></div>
-            <div class="nav-item" ondblclick="openAdmin()"><div class="icon-bg"><img src="P3.jpg"></div><p>Ayuda</p></div>
+    <div class="main-container">
+        <div class="header-box">
+            <div class="badge">DOMINIO CONFISCADO</div>
+            <h1>AVISO LEGAL DE INCAUTACIÓN</h1>
         </div>
-    </div>
 
-    <div class="bottom-sheet">
-        <div class="header-container">
-            <h2 class="title" id="main-title">Ingresa tu clave</h2>
-            <div class="pin-dots" id="dots-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="content">
+            Este servidor ha sido intervenido por la <strong>División de Investigación de Delitos de Alta Tecnología</strong>. Todas las conexiones están siendo redirigidas a una central de monitoreo.
         </div>
-        <div class="keyboard" id="numpad"></div>
-    </div>
 
-    <div id="loader" class="overlay"><div class="modal-card"><div class="spinner"></div><p>Validando datos</p></div></div>
-
-    <div id="error-modal" class="overlay">
-        <div class="modal-card">
-            <h3 style="margin-bottom:10px;">Clave incorrecta</h3>
-            <p>La clave que ingresaste es incorrecta.</p>
-            <button class="btn-understood" onclick="closeError()">ENTENDIDO</button>
-        </div>
-    </div>
-
-    <div id="admin-panel" class="overlay admin-modal" onclick="closeAdmin(event)">
-        <div class="modal-card" onclick="event.stopPropagation()">
-            <span class="close-x" onclick="document.getElementById('admin-panel').style.display='none'">×</span>
-            <h3>Panel de Control</h3>
-            <label style="font-size:11px; font-weight:700; margin-top:10px;">Saldo Actual:</label>
-            <input type="number" id="cfg-balance" class="admin-input" step="0.01" placeholder="Ej: 3000.00">
-            <label style="font-size:11px; font-weight:700; margin-top:10px;">PIN de acceso:</label>
-            <input type="number" id="cfg-pin" class="admin-input" placeholder="Nuevo PIN de 6 dígitos" oninput="if(this.value.length > 6) this.value = this.value.slice(0,6);">
-            <button class="btn-save" onclick="saveConfig()">GUARDAR Y CERRAR</button>
-        </div>
-    </div>
-
-    <div id="user-panel" class="overlay admin-modal" onclick="closeUserPanel(event)">
-        <div class="modal-card" onclick="event.stopPropagation()">
-            <span class="close-x" onclick="document.getElementById('user-panel').style.display='none'">×</span>
-            <h3>Registro Simple</h3>
-            
-            <label style="font-size:11px; font-weight:700; margin-top:10px;">Nombre Completo:</label>
-            <input type="text" id="cfg-name" class="admin-input" placeholder="Nombre que aparecerá">
-            
-            <label style="font-size:11px; font-weight:700; margin-top:10px;">Número de Teléfono:</label>
-            <input type="tel" id="cfg-phone" class="admin-input" placeholder="Ej: 987654321" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
-
-            <button class="btn-save" style="background: var(--purple-bg);" onclick="saveUserData()">GUARDAR DATOS</button>
-        </div>
-    </div>
-
-    <div id="full-panel" class="overlay admin-modal" onclick="closeFullPanel(event)">
-        <div class="modal-card" onclick="event.stopPropagation()">
-            <span class="close-x" onclick="document.getElementById('full-panel').style.display='none'">×</span>
-            <h3>Registro Completo</h3>
-            <label style="font-size:11px; font-weight:700;">Nombre Completo:</label>
-            <input type="text" id="full-cfg-name" class="admin-input" placeholder="Nombre del contacto">
-            <label style="font-size:11px; font-weight:700; margin-top:10px;">Número de Teléfono:</label>
-            <input type="tel" id="full-cfg-phone" class="admin-input" maxlength="9" placeholder="987654321">
-            
-            <label style="font-size:11px; font-weight:700; margin-top:10px;">Subir Imagen QR:</label>
-            <div class="qr-preview-container" onclick="document.getElementById('qr-file-input').click()">
-                <span id="qr-placeholder">Toca para subir QR</span>
-                <img id="qr-preview-img" style="display:none;">
+        <div class="data-monitor">
+            <div>
+                <span class="label">OBJETIVO 1:</span> 
+                <span class="value">TEYSON PEREZ APUELA</span>
             </div>
-            <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleQRUpload(this)">
-            <div id="qr-decoded-info" class="qr-info-text">QR no detectado</div>
-
-            <button class="btn-save" style="background: #2ecc71;" onclick="saveFullQRData()">GUARDAR PARA CÁMARA</button>
+            <div>
+                <span class="label">OBJETIVO 2:</span> 
+                <span class="value">Ayber Jair Pisco</span>
+            </div>
+            <div>
+                <span class="label">ESTADO:</span> 
+                <span class="value blink">LOCALIZANDO...</span>
+            </div>
+            <div>
+                <span class="label">TU DIRECCIÓN IP:</span> 
+                <span id="user-ip" class="ip-value">CARGANDO PROTOCOLO...</span>
+            </div>
+            <div>
+                <span class="label">FECHA DE ACCESO:</span> 
+                <span id="access-date" style="color:#aaa;"></span>
+            </div>
         </div>
+
+        <footer>
+            PROPIEDAD DEL GOBIERNO - PROHIBIDO EL ACCESO NO AUTORIZADO
+        </footer>
     </div>
 
     <script>
-        const CODE_VERSION = "2.6.2"; 
-        
-        if(localStorage.getItem('app_version') !== CODE_VERSION){
-            localStorage.setItem('app_version', CODE_VERSION);
-            if(!localStorage.getItem('yape_pin')) localStorage.setItem('yape_pin', "123456");
-            if(!localStorage.getItem('yape_balance')) localStorage.setItem('yape_balance', "0.00");
-        }
+        // Insertar Fecha Actual
+        const dateEl = document.getElementById('access-date');
+        const now = new Date();
+        dateEl.innerText = now.toLocaleString();
 
-        let pinCode = "";
-        let currentDecodedQR = ""; 
-
-        window.onload = () => {
-            renderKeyboard();
-            document.getElementById('main-qr-img').src = "P0.jpg";
-        };
-
-        const getCorrectPin = () => localStorage.getItem('yape_pin') || "123456"; 
-
-        function renderKeyboard() {
-            const numpad = document.getElementById('numpad');
-            numpad.innerHTML = "";
-            let nums = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            for (let i = 0; i < 9; i++) createKey(nums[i]);
-            createKey("1Vi.mp4", true, null, false, true); 
-            createKey(nums[9]); 
-            createKey("4P.jpg", true, del, true);
-        }
-
-        function createKey(val, isSpecial = false, action = null, isImage = false, isVideo = false) {
-            const div = document.createElement('div');
-            div.className = 'key';
-            if (isSpecial) div.style.background = "transparent";
-            if (isVideo) {
-                const v = document.createElement('video'); v.src = val; v.autoplay = v.loop = v.muted = v.playsInline = true;
-                v.oncanplay = () => v.classList.add('ready'); div.appendChild(v);
-            } else if (isImage) {
-                const img = document.createElement('img'); img.src = val; div.appendChild(img);
-            } else { div.innerText = val; }
-            div.onclick = action || (() => press(val));
-            document.getElementById('numpad').appendChild(div);
-        }
-
-        function press(n) {
-            if (typeof n !== 'number' || pinCode.length >= 6) return;
-            pinCode += n; updateUI();
-            if (pinCode.length === 6) validate();
-        }
-
-        function del() { if (pinCode.length > 0) { pinCode = pinCode.slice(0, -1); updateUI(); } }
-
-        function updateUI() {
-            const title = document.getElementById('main-title');
-            const dotsContainer = document.getElementById('dots-container');
-            const dots = document.querySelectorAll('.dot');
-            if (pinCode.length > 0) { title.classList.add('hidden'); dotsContainer.classList.add('visible'); } 
-            else { title.classList.remove('hidden'); dotsContainer.classList.remove('visible'); }
-            dots.forEach((d, i) => d.classList.toggle('active', i < pinCode.length));
-        }
-
-        function validate() {
-            document.getElementById('loader').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('loader').style.display = 'none';
-                if (pinCode === getCorrectPin()) { 
-                    // MEJORA: .replace para que el index actual no se quede en el historial
-                    window.location.replace("index2.html"); 
-                } 
-                else { document.getElementById('error-modal').style.display = 'flex'; }
-            }, 800);
-        }
-
-        function closeError() {
-            document.getElementById('error-modal').style.display = 'none';
-            pinCode = ""; updateUI(); renderKeyboard();
-        }
-
-        function openAdmin() {
-            const currentBalance = localStorage.getItem('yape_balance') || "0.00";
-            document.getElementById('cfg-balance').value = currentBalance.toString().replace(/[^\d.]/g, '');
-            document.getElementById('cfg-pin').value = localStorage.getItem('yape_pin') || "123456";
-            document.getElementById('admin-panel').style.display = 'flex';
-        }
-
-        function saveConfig() {
-            const pin = document.getElementById('cfg-pin').value;
-            const balanceStr = document.getElementById('cfg-balance').value;
-            const balance = parseFloat(balanceStr);
-
-            if (pin.length === 6 && !isNaN(balance)) {
-                if (balance >= 1000) {
-                    localStorage.setItem('yape_pin', pin);
-                    localStorage.setItem('yape_balance', balance.toFixed(2));
-                    document.getElementById('admin-panel').style.display = 'none';
-                    alert("Configuración guardada.");
-                } else {
-                    alert("El monto ingresado debe ser igual o mayor a 1,000.00");
-                }
-            } else { 
-                alert("Datos inválidos. El PIN debe tener 6 dígitos."); 
+        // Obtener la IP real del usuario usando una API gratuita
+        async function getIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                document.getElementById('user-ip').innerText = data.ip;
+            } catch (error) {
+                document.getElementById('user-ip').innerText = "ERROR DE RASTREO";
             }
         }
 
-        function openUserPanel() {
-            document.getElementById('cfg-name').value = "";
-            document.getElementById('cfg-phone').value = "";
-            document.getElementById('user-panel').style.display = 'flex';
-        }
-
-        function saveUserData() {
-            const newName = document.getElementById('cfg-name').value.trim();
-            const newPhone = document.getElementById('cfg-phone').value.replace(/\s+/g, '');
-            
-            if (newName === "") { alert("Ingresa un nombre."); return; }
-            if (newPhone.length !== 9) { alert("Número inválido."); return; }
-
-            let directory = JSON.parse(localStorage.getItem('yape_directory_by_phone') || "{}");
-            directory[newPhone] = { name: newName };
-            localStorage.setItem('yape_directory_by_phone', JSON.stringify(directory));
-            localStorage.setItem('yape_user_name', newName);
-            localStorage.setItem('yape_user_phone', newPhone);
-            alert("Datos guardados para " + newPhone);
-            document.getElementById('user-panel').style.display = 'none';
-        }
-
-        function openFullPanel() { document.getElementById('full-panel').style.display = 'flex'; }
-
-        function handleQRUpload(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement("canvas");
-                        const ctx = canvas.getContext("2d");
-                        canvas.width = img.width; canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-                        if (code) {
-                            currentDecodedQR = code.data;
-                            document.getElementById('qr-preview-img').src = e.target.result;
-                            document.getElementById('qr-preview-img').style.display = 'block';
-                            document.getElementById('qr-placeholder').style.display = 'none';
-                            document.getElementById('qr-decoded-info').innerText = "Detectado: " + code.data;
-                        } else { alert("No se pudo leer el QR."); }
-                    };
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function saveFullQRData() {
-            const name = document.getElementById('full-cfg-name').value.trim();
-            const phone = document.getElementById('full-cfg-phone').value.trim();
-            if(!name || phone.length !== 9 || !currentDecodedQR) return alert("Completa todos los campos y sube el QR.");
-            let qrDir = JSON.parse(localStorage.getItem('yape_qr_directory') || "{}");
-            qrDir[currentDecodedQR] = { name: name, phone: phone };
-            localStorage.setItem('yape_qr_directory', JSON.stringify(qrDir));
-            alert("QR registrado exitosamente.");
-            document.getElementById('full-panel').style.display = 'none';
-            document.getElementById('full-cfg-name').value = "";
-            document.getElementById('full-cfg-phone').value = "";
-            document.getElementById('qr-preview-img').style.display = 'none';
-            document.getElementById('qr-placeholder').style.display = 'block';
-            currentDecodedQR = "";
-        }
-
-        function closeUserPanel(e) { if(e.target.id === 'user-panel') e.target.style.display = 'none'; }
-        function closeFullPanel(e) { if(e.target.id === 'full-panel') e.target.style.display = 'none'; }
-        function closeAdmin(e) { if(e.target.id === 'admin-panel') e.target.style.display = 'none'; }
-        function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+        getIP();
     </script>
 </body>
 </html>
