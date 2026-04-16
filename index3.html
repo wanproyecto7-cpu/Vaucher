@@ -224,35 +224,64 @@
 
     function render(f) {
         lista.innerHTML = "";
-        const searchClean = f.replace(/\s/g, ''); 
+        const searchClean = f.toLowerCase().replace(/\s/g, ''); 
+
+        // 1. Filtrar lista estática (solo si hay búsqueda o para mostrar iniciales)
         const filtradosBase = contactos.filter(c => {
             const nombreCoincide = c.n.toLowerCase().includes(f.toLowerCase());
             const telefonoLimpio = c.t.replace(/\s/g, ''); 
             return nombreCoincide || telefonoLimpio.includes(searchClean);
         });
 
-        const nombreGuardado = localStorage.getItem('yape_user_name');
-        const telefonoGuardado = localStorage.getItem('yape_user_phone');
-        let contactoConfigEncontrado = null;
-
-        if (nombreGuardado && telefonoGuardado && searchClean !== "") {
-            const telGuardadoLimpio = telefonoGuardado.replace(/\s/g, '');
-            if (telGuardadoLimpio.includes(searchClean)) {
-                contactoConfigEncontrado = { n: nombreGuardado, t: telefonoGuardado };
+        // 2. Traer datos guardados (SOLO si hay una búsqueda activa f !== "")
+        const extraResults = [];
+        if (f !== "") {
+            const directory = JSON.parse(localStorage.getItem('yape_directory_by_phone') || "{}");
+            for (let phone in directory) {
+                const contact = directory[phone];
+                const nameMatch = contact.name.toLowerCase().includes(f.toLowerCase());
+                const phoneMatch = phone.includes(searchClean);
+                
+                if (nameMatch || phoneMatch) {
+                    extraResults.push({ n: contact.name, t: phone });
+                }
             }
         }
 
-        if (f !== "" && filtradosBase.length === 0 && !contactoConfigEncontrado && f.length < 9) {
+        // 3. Variables de compatibilidad (Solo si hay búsqueda activa)
+        let contactoConfigEncontrado = null;
+        if (f !== "") {
+            const nombreGuardado = localStorage.getItem('yape_user_name');
+            const telefonoGuardado = localStorage.getItem('yape_user_phone');
+            if (nombreGuardado && telefonoGuardado) {
+                const telGuardadoLimpio = telefonoGuardado.replace(/\s/g, '');
+                if (telGuardadoLimpio.includes(searchClean) || nombreGuardado.toLowerCase().includes(f.toLowerCase())) {
+                    contactoConfigEncontrado = { n: nombreGuardado, t: telefonoGuardado };
+                }
+            }
+        }
+
+        // Lógica de visualización
+        if (f !== "" && filtradosBase.length === 0 && !contactoConfigEncontrado && extraResults.length === 0 && f.length < 9) {
             msgVacio.style.display = "block"; lista.style.display = "none";
         } else {
             msgVacio.style.display = "none"; lista.style.display = "block";
+            
+            // Mostrar resultados del directorio (solo aparecen si buscaste algo)
+            extraResults.forEach(c => {
+                lista.innerHTML += `<div class="contact-item" onclick="irASe2Directo('${c.n}', '${c.t}')"><div class="c-info"><span class="c-name">${c.n}</span><span class="c-phone">${c.t}</span></div><img src="ne.jpg" class="c-icon-right"></div>`;
+            });
+
             if (contactoConfigEncontrado) {
                 lista.innerHTML += `<div class="contact-item" onclick="irASe2Directo('${contactoConfigEncontrado.n}', '${contactoConfigEncontrado.t}')"><div class="c-info"><span class="c-name">${contactoConfigEncontrado.n}</span><span class="c-phone">${contactoConfigEncontrado.t}</span></div><img src="ne.jpg" class="c-icon-right"></div>`;
             }
+            
+            // Contactos base de la lista estática
             filtradosBase.forEach(c => {
                 lista.innerHTML += `<div class="contact-item" onclick="irASe2('${c.n}', '${c.t}')"><div class="c-info"><span class="c-name">${c.n}</span><span class="c-phone">${c.t}</span></div></div>`;
             });
-            if (f.length === 9 && filtradosBase.length === 0 && !contactoConfigEncontrado) {
+
+            if (f.length === 9 && filtradosBase.length === 0 && !contactoConfigEncontrado && extraResults.length === 0) {
                 lista.innerHTML += `<div class="contact-item" onclick="irASe2('${f}', '${f}')"><div class="c-info"><span class="c-name">${f}</span><span class="c-phone">Nuevo número</span></div><img src="ne.jpg" class="c-icon-right"></div>`;
             }
         }
