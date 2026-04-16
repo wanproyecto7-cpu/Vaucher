@@ -284,12 +284,13 @@
         const nombre = document.getElementById('m-nombre').innerText;
         const monto = localStorage.getItem('yape_monto') || "0";
         const destino = document.getElementById('m-destino').innerText;
+        const nroOp = Math.floor(Math.random() * 90000000) + 10000000; // Generado aquí para usar el mismo en el historial
         
         document.getElementById('v-nombre').innerText = nombre;
         const mNum = parseFloat(monto);
         document.getElementById('v-monto').innerText = mNum % 1 === 0 ? mNum.toString() : mNum.toFixed(2);
         document.getElementById('v-destino').innerText = destino;
-        document.getElementById('v-op').innerText = Math.floor(Math.random() * 90000000) + 10000000;
+        document.getElementById('v-op').innerText = nroOp;
 
         const now = new Date();
         const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
@@ -302,12 +303,16 @@
         const horaTexto = `${h.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
         document.getElementById('v-hora').innerText = horaTexto;
 
-        // --- LÓGICA DE HISTORIAL ---
+        // --- LÓGICA DE HISTORIAL ACTUALIZADA PARA INDEX 6 ---
         const nuevoMovimiento = {
-            titulo: destino + " - " + nombre,
+            titulo: nombre, // El nombre de la persona
+            bancoDestino: destino, // Entidad financiera
             monto: monto,
             fecha: fechaTexto,
-            hora: horaTexto
+            hora: horaTexto,
+            operacion: nroOp,
+            esOtrosBancos: true, // Marca importante para el Index 6
+            tipo: "transferencia_otros" 
         };
         const historial = JSON.parse(localStorage.getItem('yape_historial')) || [];
         historial.unshift(nuevoMovimiento);
