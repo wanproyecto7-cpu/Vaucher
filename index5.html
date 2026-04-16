@@ -259,13 +259,11 @@
     }
 
     // FUNCIÓN PARA ACTUALIZAR HISTORIAL Y RESTAR SALDO
-    function actualizarHistorialYSaldo(nombre, monto, fecha, hora, op, tel) {
+    function actualizarHistorialYSaldo(nombre, monto, fecha, hora, op, tel, codigo) {
         let historial = JSON.parse(localStorage.getItem('yape_historial')) || [];
         
-        // Evitamos duplicados si se refresca la página
         if(historial.some(m => m.op === op)) return;
 
-        // Agregamos al inicio de la lista para que sea el primero en verse
         historial.unshift({
             titulo: nombre, 
             monto: monto, 
@@ -274,12 +272,12 @@
             op: op, 
             telefono: tel, 
             tipo: 'yape', 
+            codigoSeguridad: codigo, // SE AGREGA EL CÓDIGO AQUÍ
             timestamp: new Date().getTime()
         });
 
         localStorage.setItem('yape_historial', JSON.stringify(historial));
 
-        // Realizamos la resta del saldo principal
         let saldo = parseFloat(localStorage.getItem('yape_balance')) || 1000.00;
         localStorage.setItem('yape_balance', (saldo - parseFloat(monto)).toFixed(2));
     }
@@ -300,9 +298,15 @@
         if (nombre) document.getElementById('display-nombre').innerText = nombre;
         if (telMask) document.getElementById('display-phone-mask').innerText = telMask;
 
-        document.getElementById('code-1').innerText = Math.floor(Math.random() * 10);
-        document.getElementById('code-2').innerText = Math.floor(Math.random() * 10);
-        document.getElementById('code-3').innerText = Math.floor(Math.random() * 10);
+        // GENERAMOS EL CÓDIGO UNA SOLA VEZ AL CARGAR
+        const cod1 = Math.floor(Math.random() * 10);
+        const cod2 = Math.floor(Math.random() * 10);
+        const cod3 = Math.floor(Math.random() * 10);
+        const codigoFinal = [cod1, cod2, cod3];
+
+        document.getElementById('code-1').innerText = cod1;
+        document.getElementById('code-2').innerText = cod2;
+        document.getElementById('code-3').innerText = cod3;
 
         const now = new Date();
         const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
@@ -315,11 +319,11 @@
         const hStr = `${hrs.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${ampm}`;
         document.getElementById('display-time').innerText = hStr;
 
-        const opStr = Math.floor(Math.random() * 90000000) + 10000000;
+        const opStr = (Math.floor(Math.random() * 90000000) + 10000000).toString();
         document.getElementById('display-op').innerText = opStr;
 
-        // Ejecución de la lógica de datos
-        actualizarHistorialYSaldo(nombre, montoDisp, fStr, hStr, opStr, telMask);
+        // PASAMOS EL CODIGO FINAL A LA FUNCIÓN
+        actualizarHistorialYSaldo(nombre, montoDisp, fStr, hStr, opStr, telMask, codigoFinal);
 
         lanzarConfetti();
         document.getElementById('top-video').play().catch(() => {});
