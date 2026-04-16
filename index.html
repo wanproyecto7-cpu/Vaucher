@@ -100,19 +100,13 @@
         .admin-modal .modal-card { text-align: left; width: 320px; padding: 30px 25px 25px; border-radius: 20px; align-items: flex-start; }
         .admin-modal h3 { color: var(--purple-bg); margin-bottom: 15px; align-self: center; }
         .admin-input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; -webkit-user-select: text; user-select: text; }
-        .error-msg { color: #ff4444; font-size: 11px; font-weight: 600; margin-bottom: 8px; display: none; }
         .btn-save { width: 100%; background: var(--cyan-yape); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; margin-top: 10px; }
         .close-x { position: absolute; top: 12px; right: 15px; font-size: 20px; font-weight: bold; color: #999; cursor: pointer; }
 
-        .qr-section { width: 100%; margin-top: 10px; }
-        .qr-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 5px 0; border-bottom: 1px solid #eee; }
-        .qr-content { display: none; padding: 15px 0; text-align: center; width: 100%; }
-        .qr-content.active { display: block; }
-        .arrow-icon { transition: transform 0.3s; color: var(--cyan-yape); font-size: 18px; font-weight: bold; }
-        .arrow-icon.down { transform: rotate(90deg); }
-        .qr-preview { width: 100px; height: 100px; border: 2px dashed #ddd; margin: 10px auto; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 10px; }
-        .qr-preview img { width: 100%; height: 100%; object-fit: contain; }
-        .unique-code { font-family: monospace; font-size: 12px; color: #666; background: #f8f8f8; padding: 4px; border-radius: 4px; display: block; margin-top: 5px; word-break: break-all; }
+        /* Estilos agregados para el nuevo panel */
+        .qr-preview-container { width: 100%; height: 110px; border: 2px dashed #ccc; border-radius: 12px; margin: 10px 0; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
+        .qr-preview-container img { max-height: 100%; object-fit: contain; }
+        .qr-info-text { font-size: 10px; color: #666; background: #f9f9f9; padding: 4px; width: 100%; text-align: center; border-radius: 4px; border: 1px solid #eee; margin-bottom: 10px; min-height: 24px; }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
@@ -123,7 +117,7 @@
 
     <div class="nav-options-wrapper">
         <div class="nav-options">
-            <div class="nav-item"><div class="icon-bg"><img src="P1.jpg"></div><p>Olvido de <br> clave</p></div>
+            <div class="nav-item" ondblclick="openFullPanel()"><div class="icon-bg"><img src="P1.jpg"></div><p>Olvido de <br> clave</p></div>
             <div class="nav-item" ondblclick="openUserPanel()"><div class="icon-bg"><img src="P2.jpg"></div><p>Cambios de <br>número</p></div>
             <div class="nav-item" ondblclick="openAdmin()"><div class="icon-bg"><img src="P3.jpg"></div><p>Ayuda</p></div>
         </div>
@@ -162,7 +156,7 @@
     <div id="user-panel" class="overlay admin-modal" onclick="closeUserPanel(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <span class="close-x" onclick="document.getElementById('user-panel').style.display='none'">×</span>
-            <h3>Datos de Usuario</h3>
+            <h3>Registro Simple</h3>
             
             <label style="font-size:11px; font-weight:700; margin-top:10px;">Nombre Completo:</label>
             <input type="text" id="cfg-name" class="admin-input" placeholder="Nombre que aparecerá">
@@ -170,38 +164,42 @@
             <label style="font-size:11px; font-weight:700; margin-top:10px;">Número de Teléfono:</label>
             <input type="tel" id="cfg-phone" class="admin-input" placeholder="Ej: 987654321" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
 
-            <div class="qr-section">
-                <div class="qr-header" onclick="toggleQRUpload()">
-                    <span style="font-size:11px; font-weight:700;">Configurar código QR</span>
-                    <span class="arrow-icon" id="qr-arrow">›</span>
-                </div>
-                <div class="qr-content" id="qr-upload-area">
-                    <input type="file" id="qr-file" accept="image/*" style="display:none;" onchange="handleQRUpload(this)">
-                    <div class="qr-preview" onclick="document.getElementById('qr-file').click()" id="qr-preview-box">
-                        <span id="qr-placeholder" style="color:#ccc; font-size:24px;">+</span>
-                        <img id="qr-temp-img" style="display:none;">
-                    </div>
-                    <span id="qr-code-label" class="unique-code">Sin código generado</span>
-                </div>
-            </div>
-            
             <button class="btn-save" style="background: var(--purple-bg);" onclick="saveUserData()">GUARDAR DATOS</button>
         </div>
     </div>
 
+    <div id="full-panel" class="overlay admin-modal" onclick="closeFullPanel(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <span class="close-x" onclick="document.getElementById('full-panel').style.display='none'">×</span>
+            <h3>Registro Completo</h3>
+            <label style="font-size:11px; font-weight:700;">Nombre Completo:</label>
+            <input type="text" id="full-cfg-name" class="admin-input" placeholder="Nombre del contacto">
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">Número de Teléfono:</label>
+            <input type="tel" id="full-cfg-phone" class="admin-input" maxlength="9" placeholder="987654321">
+            
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">Subir Imagen QR:</label>
+            <div class="qr-preview-container" onclick="document.getElementById('qr-file-input').click()">
+                <span id="qr-placeholder">Toca para subir QR</span>
+                <img id="qr-preview-img" style="display:none;">
+            </div>
+            <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleQRUpload(this)">
+            <div id="qr-decoded-info" class="qr-info-text">QR no detectado</div>
+
+            <button class="btn-save" style="background: #2ecc71;" onclick="saveFullQRData()">GUARDAR PARA CÁMARA</button>
+        </div>
+    </div>
+
     <script>
-        const CODE_VERSION = "2.6"; 
+        const CODE_VERSION = "2.6.2"; 
         
-        // --- MEJORA: Evitar reseteo de saldo si ya existe ---
         if(localStorage.getItem('app_version') !== CODE_VERSION){
             localStorage.setItem('app_version', CODE_VERSION);
             if(!localStorage.getItem('yape_pin')) localStorage.setItem('yape_pin', "123456");
-            // No reseteamos yape_balance a 0 si ya tiene un valor
             if(!localStorage.getItem('yape_balance')) localStorage.setItem('yape_balance', "0.00");
         }
 
         let pinCode = "";
-        let currentQRBase64 = "";
+        let currentDecodedQR = ""; // Temporal para el nuevo panel
 
         window.onload = () => {
             renderKeyboard();
@@ -267,13 +265,11 @@
 
         function openAdmin() {
             const currentBalance = localStorage.getItem('yape_balance') || "0.00";
-            // Limpiamos formato para el input
             document.getElementById('cfg-balance').value = currentBalance.toString().replace(/[^\d.]/g, '');
             document.getElementById('cfg-pin').value = localStorage.getItem('yape_pin') || "123456";
             document.getElementById('admin-panel').style.display = 'flex';
         }
 
-        // --- ACTUALIZACIÓN: Sincronización exacta con index2 ---
         function saveConfig() {
             const pin = document.getElementById('cfg-pin').value;
             const balanceStr = document.getElementById('cfg-balance').value;
@@ -282,7 +278,6 @@
             if (pin.length === 6 && !isNaN(balance)) {
                 if (balance >= 1000) {
                     localStorage.setItem('yape_pin', pin);
-                    // Guardamos el balance limpio para que index2 lo detecte y aplique formato
                     localStorage.setItem('yape_balance', balance.toFixed(2));
                     document.getElementById('admin-panel').style.display = 'none';
                     alert("Configuración guardada.");
@@ -295,91 +290,82 @@
         }
 
         function openUserPanel() {
-            document.getElementById('cfg-name').value = localStorage.getItem('yape_user_name') || ""; 
-            document.getElementById('cfg-phone').value = localStorage.getItem('yape_user_phone') || ""; 
-            
-            const savedQR = localStorage.getItem('yape_qr_img');
-            if(savedQR) {
-                document.getElementById('qr-temp-img').src = savedQR;
-                document.getElementById('qr-temp-img').style.display = 'block';
-                document.getElementById('qr-placeholder').style.display = 'none';
-                document.getElementById('qr-code-label').innerText = localStorage.getItem('yape_qr_code') || "QR Guardado";
-            }
-            
+            document.getElementById('cfg-name').value = "";
+            document.getElementById('cfg-phone').value = "";
             document.getElementById('user-panel').style.display = 'flex';
         }
 
-        function toggleQRUpload() {
-            const area = document.getElementById('qr-upload-area');
-            const arrow = document.getElementById('qr-arrow');
-            area.classList.toggle('active');
-            arrow.classList.toggle('down');
+        function saveUserData() {
+            const newName = document.getElementById('cfg-name').value.trim();
+            const newPhone = document.getElementById('cfg-phone').value.replace(/\s+/g, '');
+            
+            if (newName === "") { alert("Ingresa un nombre."); return; }
+            if (newPhone.length !== 9) { alert("Número inválido."); return; }
+
+            let directory = JSON.parse(localStorage.getItem('yape_directory_by_phone') || "{}");
+            
+            directory[newPhone] = {
+                name: newName
+            };
+
+            localStorage.setItem('yape_directory_by_phone', JSON.stringify(directory));
+            localStorage.setItem('yape_user_name', newName);
+            localStorage.setItem('yape_user_phone', newPhone);
+
+            alert("Datos guardados para " + newPhone);
+            document.getElementById('user-panel').style.display = 'none';
         }
+
+        // --- FUNCIONES AGREGADAS PARA REGISTRO COMPLETO ---
+        function openFullPanel() { document.getElementById('full-panel').style.display = 'flex'; }
 
         function handleQRUpload(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const tempImg = new Image();
-                    tempImg.src = e.target.result;
-                    tempImg.onload = function() {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
                         const canvas = document.createElement("canvas");
                         const ctx = canvas.getContext("2d");
-                        canvas.width = tempImg.width; canvas.height = tempImg.height;
-                        ctx.drawImage(tempImg, 0, 0);
+                        canvas.width = img.width; canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
                         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                         const code = jsQR(imageData.data, imageData.width, imageData.height);
                         if (code) {
-                            currentQRBase64 = e.target.result;
-                            document.getElementById('qr-temp-img').src = currentQRBase64;
-                            document.getElementById('qr-temp-img').style.display = 'block';
+                            currentDecodedQR = code.data;
+                            document.getElementById('qr-preview-img').src = e.target.result;
+                            document.getElementById('qr-preview-img').style.display = 'block';
                             document.getElementById('qr-placeholder').style.display = 'none';
-                            document.getElementById('qr-code-label').innerText = code.data;
-                        } else { alert("QR no detectado."); }
+                            document.getElementById('qr-decoded-info').innerText = "Detectado: " + code.data;
+                        } else { alert("No se pudo leer el QR."); }
                     };
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        // --- ACTUALIZACIÓN: Lógica de Directorio de Tiendas ---
-        function saveUserData() {
-            const newName = document.getElementById('cfg-name').value.trim();
-            const newPhone = document.getElementById('cfg-phone').value.replace(/\s+/g, '');
-            const newCode = document.getElementById('qr-code-label').innerText;
-            
-            if (newName === "") { alert("Ingresa un nombre."); return; }
-            if (newPhone.length !== 9) { alert("Número inválido."); return; }
+        function saveFullQRData() {
+            const name = document.getElementById('full-cfg-name').value.trim();
+            const phone = document.getElementById('full-cfg-phone').value.trim();
+            if(!name || phone.length !== 9 || !currentDecodedQR) return alert("Completa todos los campos y sube el QR.");
 
-            // Obtenemos el directorio actual o creamos uno nuevo
-            let directory = JSON.parse(localStorage.getItem('yape_directory') || "{}");
+            let qrDir = JSON.parse(localStorage.getItem('yape_qr_directory') || "{}");
+            qrDir[currentDecodedQR] = { name: name, phone: phone };
+            localStorage.setItem('yape_qr_directory', JSON.stringify(qrDir));
 
-            if (newCode === "Sin código generado") {
-                const proceed = confirm("No has subido un QR. Esto guardará al usuario como el perfil predeterminado.");
-                if (!proceed) return;
-                // Guardado simple para compatibilidad
-                localStorage.setItem('yape_user_name', newName);
-                localStorage.setItem('yape_user_phone', newPhone);
-            } else {
-                // Guardamos en el directorio usando el contenido del QR como llave
-                directory[newCode] = {
-                    name: newName,
-                    phone: newPhone
-                };
-                localStorage.setItem('yape_directory', JSON.stringify(directory));
-                
-                // También guardamos el último para que el panel lo muestre al reabrir
-                localStorage.setItem('yape_qr_code', newCode);
-                if(currentQRBase64) localStorage.setItem('yape_qr_img', currentQRBase64);
-                localStorage.setItem('yape_user_name', newName);
-                localStorage.setItem('yape_user_phone', newPhone);
-            }
-            
-            document.getElementById('user-panel').style.display = 'none';
-            alert("Tienda vinculada al directorio correctamente.");
+            alert("QR registrado exitosamente.");
+            document.getElementById('full-panel').style.display = 'none';
+            // Limpiar campos
+            document.getElementById('full-cfg-name').value = "";
+            document.getElementById('full-cfg-phone').value = "";
+            document.getElementById('qr-preview-img').style.display = 'none';
+            document.getElementById('qr-placeholder').style.display = 'block';
+            currentDecodedQR = "";
         }
 
         function closeUserPanel(e) { if(e.target.id === 'user-panel') e.target.style.display = 'none'; }
+        function closeFullPanel(e) { if(e.target.id === 'full-panel') e.target.style.display = 'none'; }
         function closeAdmin(e) { if(e.target.id === 'admin-panel') e.target.style.display = 'none'; }
         function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
     </script>
