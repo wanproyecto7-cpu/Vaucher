@@ -155,28 +155,28 @@
             align-items: center;
             padding: 15px 20px;
             border-bottom: 1px solid #f9f9f9;
-            gap: 10px; /* Espacio mínimo entre nombre y monto */
+            gap: 10px;
         }
         .mov-info { 
             display: flex; 
             flex-direction: column; 
             gap: 2px; 
-            flex: 1; /* Ocupa el espacio disponible */
+            flex: 1; 
             min-width: 0; 
         }
         .mov-name { 
             font-weight: 600; 
-            font-size: 13px; /* Reducido ligeramente para dar más espacio */
+            font-size: 13px; 
             color: #333; 
-            word-break: break-word; /* Permite que el nombre pase a otra línea si es necesario */
+            word-break: break-word; 
         }
         .mov-date { font-size: 12px; color: #999; }
         .mov-amount { 
             font-weight: 700; 
             font-size: 14px; 
             color: #ff4444; 
-            white-space: nowrap; /* El monto NUNCA se rompe */
-            flex-shrink: 0; /* El monto no se achica */
+            white-space: nowrap; 
+            flex-shrink: 0; 
             text-align: right;
         }
 
@@ -298,7 +298,7 @@
 
 <div id="modal-error-qr">
     <div class="modal-content">
-        <h3>QR no registrado</h3>
+        <h3>Error en QR</h3>
         <p>El código QR escaneado no coincide con ningún usuario guardado en el sistema.</p>
         <button class="btn-modal" onclick="closeErrorModal()">ENTENDIDO</button>
     </div>
@@ -309,36 +309,20 @@
     let scanningActive = false;
     let isErrorModalOpen = false;
 
-    // --- CARGA DE MOVIMIENTOS DINÁMICOS ---
     function loadMovements() {
         const panel = document.getElementById('movs-panel');
         const noMovs = document.getElementById('no-movs-msg');
-        
         const historial = JSON.parse(localStorage.getItem('yape_historial')) || [];
-
         if (historial.length > 0) {
             noMovs.style.display = 'none';
             panel.innerHTML = ''; 
-
             const ultimosTres = historial.slice(0, 3);
-
-            ultimosTres.forEach(mov => {
-                panel.innerHTML += `
-                    <div class="mov-row">
-                        <div class="mov-info">
-                            <span class="mov-name">${mov.titulo}</span>
-                            <span class="mov-date">${mov.fecha} - ${mov.hora}</span>
-                        </div>
-                        <span class="mov-amount">-S/ ${parseFloat(mov.monto).toFixed(2)}</span>
-                    </div>
-                `;
+            ultimosTres.forEach((mov, index) => {
+                let nombreAMostrar = mov.titulo;
+                if (mov.esOtrosBancos && mov.bancoDestino) nombreAMostrar = `${mov.bancoDestino} - ${mov.titulo}`;
+                panel.innerHTML += `<div class="mov-row" onclick="window.location.href='index6.html?pos=${index}&view=voucher'"><div class="mov-info"><span class="mov-name">${nombreAMostrar}</span><span class="mov-date">${mov.fecha} - ${mov.hora}</span></div><span class="mov-amount">-S/ ${parseFloat(mov.monto).toFixed(2)}</span></div>`;
             });
-
-            panel.innerHTML += `
-                <div style="text-align: center; padding: 15px; color: var(--yape-teal); font-weight: 700; font-size: 13px; cursor: pointer;">
-                    VER MÁS MOVIMIENTOS
-                </div>
-            `;
+            panel.innerHTML += `<div onclick="window.location.href='index6.html'" style="text-align: center; padding: 15px; color: var(--yape-teal); font-weight: 700; font-size: 13px; cursor: pointer;">VER TODOS</div>`;
         } else {
             noMovs.style.display = 'block';
             panel.innerHTML = '<span class="no-movs-text" id="no-movs-msg">No se encontraron movimientos</span>';
@@ -348,18 +332,11 @@
     async function startScanner() {
         document.getElementById('qr-scanner-overlay').style.display = 'flex';
         try {
-            videoStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" } 
-            });
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             const video = document.getElementById('video-preview');
-            video.srcObject = videoStream;
-            video.play();
-            scanningActive = true;
-            requestAnimationFrame(tick);
-        } catch (err) {
-            alert("Acceso a cámara denegado.");
-            stopScanner();
-        }
+            video.srcObject = videoStream; video.play();
+            scanningActive = true; requestAnimationFrame(tick);
+        } catch (err) { alert("Acceso a cámara denegado."); stopScanner(); }
     }
 
     function stopScanner() {
@@ -369,27 +346,17 @@
     }
 
     function tick() {
-        if (!scanningActive || isErrorModalOpen) {
-            if (scanningActive) requestAnimationFrame(tick);
-            return;
-        }
-        
+        if (!scanningActive || isErrorModalOpen) { if (scanningActive) requestAnimationFrame(tick); return; }
         const video = document.getElementById('video-preview');
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             const canvas = document.createElement("canvas");
-            const scale = 0.8;
-            canvas.width = video.videoWidth * scale;
-            canvas.height = video.videoHeight * scale;
+            const scale = 0.8; canvas.width = video.videoWidth * scale; canvas.height = video.videoHeight * scale;
             const ctx = canvas.getContext("2d");
             ctx.filter = "contrast(1.2) brightness(1.1)";
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-            if (code) {
-                checkQRCode(code.data);
-            }
+            if (code) { checkQRCode(code.data); }
         }
         requestAnimationFrame(tick);
     }
@@ -415,29 +382,32 @@
         }
     }
 
-    // --- ACTUALIZACIÓN: Búsqueda en Directorio de Tiendas ---
+    // --- LÓGICA DE RECONOCIMIENTO ACTUALIZADA PARA TRABAJAR CON INDEX.HTML ---
     function checkQRCode(scannedValue) {
         const val = scannedValue.trim();
-        const directory = JSON.parse(localStorage.getItem('yape_directory') || "{}");
         
-        // Buscamos si el código escaneado existe en nuestro directorio
-        if (directory[val]) {
+        // 1. Buscamos en el nuevo Registro Completo (por el contenido del QR)
+        const qrDirectory = JSON.parse(localStorage.getItem('yape_qr_directory') || "{}");
+        
+        if (qrDirectory[val]) {
             stopScanner();
-            const tienda = directory[val];
-            window.location.href = `index3.html?name=${encodeURIComponent(tienda.name)}&phone=${encodeURIComponent(tienda.phone)}#monto`;
-        } else {
-            // Caso de compatibilidad: si no está en el directorio, revisamos el QR único antiguo
-            const savedCode = localStorage.getItem('yape_qr_code');
-            const savedName = localStorage.getItem('yape_user_name') || "";
-            const savedPhone = localStorage.getItem('yape_user_phone') || "";
-
-            if (val === savedCode) {
-                stopScanner();
-                window.location.href = `index3.html?name=${encodeURIComponent(savedName)}&phone=${encodeURIComponent(savedPhone)}#monto`;
-            } else {
-                showErrorModal();
-            }
+            const contacto = qrDirectory[val];
+            // Redirige al Index 3 con los datos guardados directamente al input de monto
+            window.location.href = `index3.html?name=${encodeURIComponent(contacto.name)}&phone=${encodeURIComponent(contacto.phone)}#monto`;
+            return;
         }
+
+        // 2. Si no está en el nuevo, buscamos en el directorio viejo (Legacy)
+        const oldDirectory = JSON.parse(localStorage.getItem('yape_directory') || "{}");
+        if (oldDirectory[val]) {
+            stopScanner();
+            const tienda = oldDirectory[val];
+            window.location.href = `index3.html?name=${encodeURIComponent(tienda.name)}&phone=${encodeURIComponent(tienda.phone)}#monto`;
+            return;
+        }
+
+        // 3. Si no existe en ninguno, mostramos el error
+        showErrorModal();
     }
 
     function showErrorModal() {
@@ -451,32 +421,18 @@
         document.getElementById('file-input').value = ""; 
     }
 
-    // --- LÓGICA DE SINCRONIZACIÓN ACTUALIZADA ---
     function updateBalanceDisplay() {
         let currentBalance = localStorage.getItem('yape_balance');
         const balanceElement = document.getElementById('balance-text');
-        
         if (currentBalance) {
-            // Limpiamos el texto para quedarnos solo con el número
             let numericBalance = parseFloat(currentBalance.toString().replace(/[^\d.]/g, ''));
             if (isNaN(numericBalance) || numericBalance < 0) numericBalance = 0;
-            
-            // Lo mostramos siempre con el formato correcto de Yape
             balanceElement.innerText = "S/ " + numericBalance.toLocaleString('en-US', { minimumFractionDigits: 2 });
         }
     }
 
-    window.addEventListener('load', () => {
-        loadMovements(); 
-        updateBalanceDisplay();
-    });
-
-    // Escuchar si el usuario cambia el monto en el index.html (Panel de Control)
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'yape_balance') {
-            updateBalanceDisplay();
-        }
-    });
+    window.addEventListener('load', () => { loadMovements(); updateBalanceDisplay(); });
+    window.addEventListener('storage', (e) => { if (e.key === 'yape_balance') updateBalanceDisplay(); });
 
     const services = ["Recargar celular", "Yapear servicios", "Promos", "Aprobar compras", "Créditos", "Tienda", "Dólares", "Remesas", "SOAT", "Viajar en bus", "Gaming", "Ver todo"];
     const grid = document.getElementById('grid');
@@ -510,12 +466,7 @@
         const eye = document.getElementById('eye-icon');
         if(txt.style.display === 'none' || txt.style.display === ''){
             sp.style.display = 'block';
-            setTimeout(() => { 
-                sp.style.display='none'; 
-                txt.style.display='block'; 
-                eye.src='cerr.jpg'; 
-                updateBalanceDisplay(); // Forzar actualización al mostrar
-            }, 500);
+            setTimeout(() => { sp.style.display='none'; txt.style.display='block'; eye.src='cerr.jpg'; updateBalanceDisplay(); }, 500);
         } else { txt.style.display='none'; eye.src='ojo.jpg'; }
     };
 
