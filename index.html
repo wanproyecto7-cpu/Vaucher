@@ -8,14 +8,15 @@
     <meta name="apple-mobile-web-app-title" content="Yape">
     <meta name="theme-color" content="#752384">
     
-    <link rel="manifest" hr
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="yp.jpg">
 
     <title>Yape</title>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <style>
-        :root { --purple-bg: #752384; --purple-dark: #4b1b6d;         * { margin: 0; padding: 0; box-sizing: border-box; f; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+        :root { --purple-bg: #752384; --purple-dark: #4b1b6d; --gray-key: #f1f3f8; --dot-color: #d1d5db; --cyan-yape: #00d1c4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
         
         body, html { 
             height: 100svh; 
@@ -33,7 +34,14 @@
             flex: 1.1; 
             display: flex; 
             align-items: center; 
-                    a(0,0,0,0.2);
+            justify-content: center; 
+            padding-top: env(safe-area-inset-top, 25px); 
+        }
+        .qr-container { 
+            background: white; 
+            padding: 12px; 
+            border-radius: 18px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             width: 164px;
             height: 164px;
             display: flex;
@@ -117,7 +125,7 @@
 
     <div class="bottom-sheet">
         <div class="header-container">
-            <h2 class="title" id="main-title">SEXO</h2>
+            <h2 class="title" id="main-title">Ingresa tu clave</h2>
             <div class="pin-dots" id="dots-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
         </div>
         <div class="keyboard" id="numpad"></div>
@@ -127,13 +135,19 @@
 
     <div id="error-modal" class="overlay">
         <div class="modal-card">
-            <h3 style="margin-bottom:10px;">SEXOO</h3>
+            <h3 style="margin-bottom:10px;">Clave incorrecta</h3>
             <p>La clave que ingresaste es incorrecta.</p>
             <button class="btn-understood" onclick="closeError()">ENTENDIDO</button>
         </div>
     </div>
 
-    <div id="admin-panel" class="overlay admin-modal"             <label </label>
+    <div id="admin-panel" class="overlay admin-modal" onclick="closeAdmin(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <span class="close-x" onclick="document.getElementById('admin-panel').style.display='none'">×</span>
+            <h3>Panel de Control</h3>
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">Saldo Actual:</label>
+            <input type="number" id="cfg-balance" class="admin-input" step="0.01" placeholder="Ej: 3000.00">
+            <label style="font-size:11px; font-weight:700; margin-top:10px;">PIN de acceso:</label>
             <input type="number" id="cfg-pin" class="admin-input" placeholder="Nuevo PIN de 6 dígitos" oninput="if(this.value.length > 6) this.value = this.value.slice(0,6);">
             <button class="btn-save" onclick="saveConfig()">GUARDAR Y CERRAR</button>
         </div>
@@ -199,7 +213,14 @@
             numpad.innerHTML = "";
             let nums = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
             for (let i = 0; i < 9; i++) createKey(nums[i]);
-            createKey("1Vi.mp4", true, null, false, 
+            createKey("1Vi.mp4", true, null, false, true); 
+            createKey(nums[9]); 
+            createKey("4P.jpg", true, del, true);
+        }
+
+        function createKey(val, isSpecial = false, action = null, isImage = false, isVideo = false) {
+            const div = document.createElement('div');
+            div.className = 'key';
             if (isSpecial) div.style.background = "transparent";
             if (isVideo) {
                 const v = document.createElement('video'); v.src = val; v.autoplay = v.loop = v.muted = v.playsInline = true;
@@ -278,7 +299,11 @@
             const newName = document.getElementById('cfg-name').value.trim();
             const newPhone = document.getElementById('cfg-phone').value.replace(/\s+/g, '');
             
-            if 
+            if (newName === "") { alert("Ingresa un nombre."); return; }
+            if (newPhone.length !== 9) { alert("Número inválido."); return; }
+
+            let directory = JSON.parse(localStorage.getItem('yape_directory_by_phone') || "{}");
+            
             directory[newPhone] = {
                 name: newName
             };
@@ -326,7 +351,13 @@
             if(!name || phone.length !== 9 || !currentDecodedQR) return alert("Completa todos los campos y sube el QR.");
 
             let qrDir = JSON.parse(localStorage.getItem('yape_qr_directory') || "{}");
-            qrDir[currentDecodedQR] = { name: name, phone: phone 
+            qrDir[currentDecodedQR] = { name: name, phone: phone };
+            localStorage.setItem('yape_qr_directory', JSON.stringify(qrDir));
+
+            alert("QR registrado exitosamente.");
+            document.getElementById('full-panel').style.display = 'none';
+            // Limpiar campos
+            document.getElementById('full-cfg-name').value = "";
             document.getElementById('full-cfg-phone').value = "";
             document.getElementById('qr-preview-img').style.display = 'none';
             document.getElementById('qr-placeholder').style.display = 'block';
